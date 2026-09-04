@@ -1,0 +1,128 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Version:  dev
+    \\  /    A nd           | Website:  https://openfoam.org
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    Post-processing for the 2D airfoil at Re = 100.
+
+    Run with (postProcess cannot construct the momentum transport model):
+
+        foamPostProcess -solver incompressibleFluid -time 90:100
+
+    Reference values follow from D = 1, U = 1, nu = 1e-2, span = 0.1:
+        magUInf 1;  lRef 1;  Aref = D*span = 0.1;  rhoInf 1 (kinematic p).
+
+\*---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      functions;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Order matters: Cp and wallShearStress must exist before "surfaces" samples them.
+
+forceCoeffs
+{
+    type            forceCoeffs;
+    libs            ("libforces.so");
+
+    // timeStep is correct here and only here: forceCoeffs appends to
+    // postProcessing/forceCoeffs/<startTime>/ and never creates a time directory,
+    // so per-step sampling is cheap and gives a clean series for the Strouhal FFT.
+    writeControl    timeStep;
+    writeInterval   1;
+    log             yes;
+
+    patches         (airfoil);
+
+    // Kinematic pressure, so rho is the placeholder name and rhoInf scales it
+    rho             rhoInf;
+    rhoInf          1;
+
+    magUInf         1;
+    lRef            1;      // D
+    Aref            0.1;    // D * span (span = 0.1) -- NOT 1.0
+
+    CofR            (0 0 0);
+    dragDir         (0.984807753 0.173648178 0);
+    liftDir         (-0.173648178 0.984807753 0);
+    pitchAxis       (0 0 1);
+}
+
+
+Cp
+{
+    type            pressure;
+    libs            ("libfieldFunctionObjects.so");
+
+    // writeTime, NOT timeStep. A field-writing FO creates a time directory for
+    // whatever time it fires on, so "timeStep" during a live foamRun mints a new
+    // dir every deltaT containing only this field and no U/p.
+    executeControl  writeTime;
+    writeControl    writeTime;
+
+    field           p;
+    result          Cp;
+
+    calcTotal       no;
+    calcCoeff       yes;
+
+    // All three are required lookups once calcCoeff is on.
+    // p here is kinematic, so it is scaled by rhoInf: Cp = (p - pInf)/(0.5*rhoInf*|UInf|^2)
+    pInf            0;
+    UInf            (1 0 0);
+    rhoInf          1;
+}
+
+
+wallShearStress
+{
+    type            wallShearStress;
+    libs            ("libfieldFunctionObjects.so");
+
+    executeControl  writeTime;
+    writeControl    writeTime;
+
+    // Keep this explicit. An explicit list bypasses the isA<wallPolyPatch> filter,
+    // so this still works if the mesh is regenerated (gmshToFoam resets every
+    // patch to type "patch", losing the "wall" type on airfoil).
+    patches         (airfoil);
+}
+
+
+surfaces
+{
+    type            surfaces;
+    libs            ("libsampling.so");
+
+    executeControl  writeTime;
+    writeControl    writeTime;
+
+    surfaceFormat   raw;
+    interpolationScheme cell;
+
+    fields          (Cp p wallShearStress U);
+
+    surfaces
+    {
+        airfoil
+        {
+            type        patch;
+            patches     (airfoil);
+
+            // Must be false. wallShearStress has a zero internal field and carries
+            // data only on the boundary, so interpolating would smear zeros in.
+            interpolate false;
+        }
+    }
+}
+
+// ************************************************************************* //

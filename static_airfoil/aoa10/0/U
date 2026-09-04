@@ -1,0 +1,31 @@
+FoamFile
+{
+    version 2.0;
+    format ascii;
+    class volVectorField;
+    object U;
+}
+
+dimensions  [0 1 -1 0 0 0 0];
+
+internalField  uniform (0.984807753 0.173648178 0);
+
+boundaryField
+{
+    farfield
+    {
+        type freestreamVelocity;
+        freestreamValue uniform (0.984807753 0.173648178 0);
+    }
+
+    airfoil
+    {
+        type noSlip;
+    }
+
+    frontAndBack
+    {
+        type empty;
+    }
+    #includeEtc "caseDicts/setConstraintTypes"
+}
