@@ -192,6 +192,74 @@ def subharmonic_order(t, y, max_order=4, min_ratio=0.05, min_prominence=8.0):
     return 1, 0.0, float(Y[k_dom])
 
 
+def spectral_structure(t, y, max_order=4, min_ratio=0.05, min_prominence=8.0,
+                       carrier_frac=0.5):
+    """Separate the ORBIT frequency from the SHEDDING frequency.
+
+    The earlier version took the largest spectral peak as the carrier and looked
+    BELOW it for a subharmonic.  That assumes the carrier is always the tallest
+    peak, and it is not:
+
+        AoA 30   f=0.3202 A=12806 (carrier)   f/2=0.1593 A=8580   sub/car = 0.67
+        AoA 28   f=0.1893 A=3006  (FUNDAMENTAL) 2f=0.3781 A=2018  car/sub = 0.67
+
+    Same period-2 structure, opposite dominance.  At AoA 28 the search found
+    nothing below the peak and reported period-1 at f=0.189 -- which happens to
+    give the right PERIOD but halves SAMPLE_PERIOD, so phase 2 would have written
+    32 samples per ORBIT (16 per shedding cycle) instead of 32 per shedding
+    cycle, and D_SUB would not have been computed at all.
+
+    A(2f)/A(f) cannot be used to tell the two apart: it reads 0.270 at AoA 30
+    (period-2) and 0.195 at AoA 24 (period-1).  So find the two frequencies
+    independently instead:
+
+      f_carrier  the HIGHEST peak still carrying `carrier_frac` of the maximum
+                 amplitude.  "Resolve everything with at least half the peak's
+                 amplitude" -- this is what the sampling rate has to satisfy.
+      f_fund     the LOWEST peak above `min_ratio`, which is the orbit frequency.
+                 The looser threshold matters near onset, where the subharmonic
+                 emerges small and would be missed by carrier_frac.
+
+    Returns (f_fund, f_carrier, order, sub_ratio).
+    """
+    f, Y, dt = spectrum(t, y)
+    if f is None or len(Y) < 8:
+        return 0.0, 0.0, 1, 0.0
+    floor = float(np.median(Y[1:]))
+    amax = float(Y.max())
+    k_dom = int(np.argmax(Y))
+    peaks = []
+    for k in range(2, len(Y) - 1):
+        if Y[k] >= Y[k - 1] and Y[k] >= Y[k + 1] and Y[k] >= min_ratio * amax \
+           and (floor <= 0 or Y[k] / floor >= min_prominence):
+            peaks.append((k, _refine(f, Y, k), float(Y[k])))
+    if not peaks:
+        return _refine(f, Y, k_dom), _refine(f, Y, k_dom), 1, 0.0
+
+    strong = [p for p in peaks if p[2] >= carrier_frac * amax]
+    car = max(strong, key=lambda p: p[1]) if strong else (k_dom, _refine(f, Y, k_dom), amax)
+    f_car, a_car = car[1], car[2]
+    k_fund, f_low, a_low = min(peaks, key=lambda p: p[1])
+
+    order, sub_ratio = 1, 0.0
+    if f_low > 0 and f_car > f_low * 1.5:
+        r = f_car / f_low
+        m = int(round(r))
+        # Reject anything that is not a clean integer ratio: that is a second,
+        # incommensurate frequency (a torus), not a subharmonic of this one.
+        if 2 <= m <= max_order and abs(r - m) <= 0.15:
+            order = m
+            # Relative to the CARRIER, not to the largest peak: at AoA 28 the
+            # subharmonic IS the largest peak, and a_low/amax would read 1.0 for
+            # every such case regardless of how strong the subharmonic actually
+            # is.  A(f_fund)/A(f_carrier) is the quantity that means something
+            # and is comparable across angles -- it is the bifurcation diagram.
+            sub_ratio = a_low / a_car if a_car > 0 else 0.0
+    # Derive the fundamental FROM the carrier: the carrier is a strong, sharp
+    # peak, so its refined location is the more precise of the two.
+    f_fund = f_car / order if f_car > 0 else 0.0
+    return f_fund, f_car, order, float(sub_ratio)
+
 def harmonic_deviation(t, y, f_fund, min_ratio=0.02):
     """Are all significant peaks integer multiples of f_fund?
 
@@ -214,11 +282,26 @@ def harmonic_deviation(t, y, f_fund, min_ratio=0.02):
     return float(dev)
 
 
-def window_stats(t, y):
-    f, amp, prom = dominant_freq(t, y)
+def window_stats(t, y, max_order=4, min_ratio=0.05, min_prominence=8.0):
+    """Per-window statistics.
+
+    `freq` is the structure-aware CARRIER, never the raw largest peak.  Which
+    peak is tallest flips as SUBHARM_RATIO crosses 1, and AoA 26 sits almost
+    exactly there: window A read ratio 1.072 (fundamental taller, largest peak
+    0.19922) and window B read 0.948 (carrier taller, largest peak 0.39532), so
+    comparing "dominant frequencies" between the windows compared two different
+    physical quantities and pinned D_FREQ at 0.496 -- a factor of two -- for
+    every chunk, while the carriers actually agreed to 0.007.  Left alone the run
+    could never converge and would have burned to T1_MAX.
+    """
+    f_fund, f_car, order, ratio = spectral_structure(
+        t, y, max_order=max_order, min_ratio=min_ratio,
+        min_prominence=min_prominence)
+    _, amp, prom = dominant_freq(t, y)
     return dict(mean=float(y.mean()),
                 p2p=float(np.percentile(y, 99) - np.percentile(y, 1)),
-                freq=f, peak=amp, prom=prom)
+                freq=f_car, fund=f_fund, order=order, ratio=ratio,
+                peak=amp, prom=prom)
 
 
 def main():
@@ -242,11 +325,9 @@ def main():
     # period-1 or period-m.  Both are needed before the test window can even be
     # sized, because the window is cut in FUNDAMENTAL periods.
     half = len(t_all) // 2
-    f_car0 = dominant_freq(t_all[half:], cl_all[half:])[0]
-    order, sub_ratio, _ = subharmonic_order(
+    f_fund0, f_car0, order, sub_ratio = spectral_structure(
         t_all[half:], cl_all[half:], max_order=max(1, args.max_order),
         min_ratio=args.subharmonic_ratio, min_prominence=args.min_prominence)
-    f_fund0 = f_car0 / order if f_car0 > 0 else 0.0
 
     # Anchor the test windows on CYCLES counted back from the end, not on a
     # fraction of the series.  A fraction wastes the whole early transient: once
@@ -283,17 +364,20 @@ def main():
     if a.sum() < 16 or b.sum() < 16:      # too short to judge at all
         a = np.arange(len(t)) < len(t) // 2
         b = ~a
-    sa, sb = window_stats(t[a], cl[a]), window_stats(t[b], cl[b])
+    wkw = dict(max_order=max(1, args.max_order),
+               min_ratio=args.subharmonic_ratio,
+               min_prominence=args.min_prominence)
+    sa, sb = window_stats(t[a], cl[a], **wkw), window_stats(t[b], cl[b], **wkw)
 
     # Re-measure on window B, where the signal is closest to converged, and let
     # that be the reported answer.
-    f_car = sb["freq"] or f_car0
-    order_b, sub_ratio_b, _ = subharmonic_order(
+    f_fund_b, f_car_b, order_b, sub_ratio_b = spectral_structure(
         t[b], cl[b], max_order=max(1, args.max_order),
         min_ratio=args.subharmonic_ratio, min_prominence=args.min_prominence)
-    if order_b > 1:
-        order, sub_ratio = order_b, sub_ratio_b
-    f_fund = f_car / order if f_car > 0 else 0.0
+    if f_car_b > 0:
+        f_fund, f_car, order, sub_ratio = f_fund_b, f_car_b, order_b, sub_ratio_b
+    else:
+        f_fund, f_car = f_fund0, f_car0
 
     period = 1.0 / f_fund if f_fund > 0 else 0.0            # orbit period
     sample_period = 1.0 / f_car if f_car > 0 else 0.0       # carrier period
@@ -336,9 +420,7 @@ def main():
     # orbit is still splitting.  Compare A(f/m)/A(f) between the two windows.
     d_sub = 0.0
     if order > 1:
-        _, r_a, _ = subharmonic_order(t[a], cl[a], max_order=order,
-                                      min_ratio=0.0, min_prominence=0.0)
-        d_sub = rel(r_a, sub_ratio, max(sub_ratio, 1e-9))
+        d_sub = rel(sa["ratio"], sub_ratio, max(sub_ratio, 1e-9))
 
     # Gate on whether the window was actually cut to length, NOT on recounting
     # cycles in it.  The window is 2*n_per fundamental periods BY CONSTRUCTION,
