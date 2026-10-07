@@ -222,15 +222,25 @@ if __name__ == "__main__":
         default=0.08,
         help="gmsh Bump coefficient: LE/TE cell ~ bump * uniform spacing. "
              "This sets the Courant limit of the whole simulation.")
+    parser.add_argument(
+        "--naca",
+        type=str,
+        default="0012",
+        help="NACA 4-digit code (default 0012; e.g. 0006 for the thickness study)")
+    parser.add_argument(
+        "--h1-coef",
+        type=float,
+        default=0.05,
+        help="first cell h1 = coef/sqrt(Re); 0.05 is the production rule")
     args = parser.parse_args()
 
     Re = args.re
     NS, NTE, NR, R = args.ns, args.nte, args.nr, args.radius
-    H1 = 0.05/np.sqrt(Re)
+    H1 = args.h1_coef/np.sqrt(Re)
     OUTFILE = args.filename
 
 
-    af = naca4("0012", n_points=200, x_trunc=0.98)
+    af = naca4(args.naca, n_points=200, x_trunc=0.98)
     ff = build_farfield(center=(0.25, 0.0), radius=R, ns=NS, nte=NTE)
 
     gmsh.initialize()
