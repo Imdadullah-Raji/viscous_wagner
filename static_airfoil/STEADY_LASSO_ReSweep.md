@@ -81,8 +81,8 @@ the fixed tangential spacing. Both are still within checkMesh limits.
 - **Grid** for both new Re: 0–12° in 0.5° steps, plus 14, 16, 18 and 20°, i.e. 29 cases each.
 - **Execution:** sequential, one case at a time on 6 MPI ranks, Re = 2000 first, then Re = 100.
   Each case took 150–390 s; the two sweeps together took about 3.5 h.
-- **Location:** `steady_re100/` and `steady_re2000/`, each with its `sweep.sh`, build logs,
-  `run_pilot.log` (12°) and `run_steady.log`. The chain driver is `steady_re2000/chain_sweeps.sh`.
+- **Location:** `NACA0012/steady_re100/` and `NACA0012/steady_re2000/`, each with its `sweep.sh`, build logs,
+  `run_pilot.log` (12°) and `run_steady.log`. The chain driver is `NACA0012/steady_re2000/chain_sweeps.sh`.
 
 ### Convergence, judged on the force trace
 
@@ -324,8 +324,8 @@ What the θ picture shows:
 Added 2026-10-07 to test the Re^0.66 law between its four original points. Same M2 recipe
 (h₁ = 0.05/√Re), same 0–8° / 0.5° grid, SIMPLE at 6000 iterations, 6 ranks, one case at a time.
 
-- **Cases:** `steady_re_scaling/steady_re{200,300,400,600,700,800,900}/steady_aoa*`, driver
-  `steady_re_scaling/sweep.sh`, log `steady_re_scaling/run_steady.log`.
+- **Cases:** `NACA0012/steady_re_scaling/steady_re{200,300,400,600,700,800,900}/steady_aoa*`, driver
+  `NACA0012/steady_re_scaling/sweep.sh`, log `NACA0012/steady_re_scaling/run_steady.log`.
 - **All 119 cases CONVERGED** on the force trace; every log reached `End`; every mesh passes
   `checkMesh` (max skewness 1.31 at Re = 200 falling to 0.73 at Re = 900).
 - **Fit:** the odd-Legendre fit of the section above (x = θ/θ_max mirrored to [−1, 1], P1–P9,
@@ -384,7 +384,7 @@ Local exponent d ln|c3| / d ln Re between neighbouring Re:
 
 **Setup.**
 
-- **Case:** `unsteady_re2000/re2000_aoa9.5/`, built by `make_case.sh` on the Re = 2000 mesh.
+- **Case:** `NACA0012/unsteady_re2000/re2000_aoa9.5/`, built by `make_case.sh` on the Re = 2000 mesh.
 - **Run:** `NO_FIELDS=1 ./run_staged.sh … 6`, i.e. 6 MPI ranks and forces only. Phase 0 was the
   impulsive start at dt = 4e-5 to t = 0.5. Phase 1 used fixed-dt chunks of 20 time units, with dt
   re-tuned between chunks to 5.63e-4 and then 6.0e-4 (the `DT_MAX` ceiling). The sawtooth check
@@ -433,7 +433,7 @@ grows from t ≈ 8, and it saturates by t ≈ 20.
 ## Caveats
 
 1. **Mesh independence has not been shown at Re = 100, 1000 or 2000.** Only Re = 500 has a mesh
-   study (`mesh_convergence_M1/`). Re = 2000 is the most exposed: it uses the same tangential and
+   study (`NACA0012/mesh_convergence_M1/`). Re = 2000 is the most exposed: it uses the same tangential and
    radial cell counts with a thinner viscous layer.
 2. **"Preshedding" is assumed, not measured, for Re = 100 and 2000.** The 0–8° and 0–6° ranges
    are below the SIMPLE-oscillation angle at every Re. But SIMPLE oscillation signals a *strongly*
@@ -449,9 +449,9 @@ grows from t ≈ 8, and it saturates by t ≈ 20.
 
 **New Re = 100 and Re = 2000 data:**
 
-- Steady cases in `steady_re100/` and `steady_re2000/`.
-- The unsteady case in `unsteady_re2000/re2000_aoa9.5/`, with its driver log
-  `unsteady_re2000/run_aoa9.5.log`.
+- Steady cases in `NACA0012/steady_re100/` and `NACA0012/steady_re2000/`.
+- The unsteady case in `NACA0012/unsteady_re2000/re2000_aoa9.5/`, with its driver log
+  `NACA0012/unsteady_re2000/run_aoa9.5.log`.
 
 **Meshes:** `meshes/M2_ns160_nr180_b025_re100.msh` and `meshes/M2_ns160_nr180_b025_re2000.msh`.
 
@@ -472,9 +472,9 @@ grows from t ≈ 8, and it saturates by t ≈ 20.
 
 **Re-scaling check (2026-10-07):**
 
-- Steady cases in `steady_re_scaling/steady_re{200,...,900}/`; driver `steady_re_scaling/sweep.sh`.
+- Steady cases in `NACA0012/steady_re_scaling/steady_re{200,...,900}/`; driver `NACA0012/steady_re_scaling/sweep.sh`.
 - Meshes `meshes/M2_ns160_nr180_b025_re{200,300,400,600,700,800,900}.msh`.
-- `collect()` in `analysis/lasso_re1000.py` falls back to `steady_re_scaling/steady_re<RE>/`
+- `collect()` in `analysis/lasso_re1000.py` falls back to `NACA0012/steady_re_scaling/steady_re<RE>/`
   when `steady_re<RE>/` does not exist.
 - `analysis/cubic_vs_re.py` gains `--re` and `--step`; non-default choices write to
   `analysis/figs/cubic_vs_re_<n>re_step<step>/`. Defaults reproduce the old output byte for byte.
@@ -497,5 +497,5 @@ RES="100 200 300 400 500 600 700 800 900 1000 2000"
 (cd analysis && $PY cubic_vs_re.py --re $RES --step 0.5)
 (cd analysis && $PY legendre_vs_re.py --step 0.5 && $PY plot_c3_semilog.py --step 0.5)
 $PY analysis/plot_unsteady_re2000.py
-NO_FIELDS=1 ./run_staged.sh unsteady_re2000/re2000_aoa9.5 6
+NO_FIELDS=1 ./run_staged.sh NACA0012/unsteady_re2000/re2000_aoa9.5 6
 ```

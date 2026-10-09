@@ -3,14 +3,14 @@
 Run with: /home/raji/miniconda3/envs/research/bin/python analysis/cubic_vs_re.py
 
 C_L = b0 + b1*theta + b3*theta^3 (theta in rad) on the converged steady cases of
-steady_re{100,500,1000,2000}/ over 0-6 and 0-8 deg, then a power law
+NACA0012/steady_re{100,500,1000,2000}/ over 0-6 and 0-8 deg, then a power law
 |b3| = c * Re^p fitted in log space.  OLS, not Lasso: at fixed lambda the
 Lasso selection itself depends on the fit range (see STEADY_LASSO_ReSweep.md),
 while b3 is stable between ranges.
 -> analysis/figs/resweep_cubic_vs_re/   (defaults)
 
   --re 100 200 ... 2000   Re list (cases found by lasso_re1000.collect, which
-                          also looks in steady_re_scaling/)
+                          also looks in NACA0012/steady_re_scaling/)
   --step 1                use only angles on this grid (deg), so every Re is fitted
                           on the same points; default 0.5
   non-default choices write to figs/cubic_vs_re_<nRe>re_step<step>/

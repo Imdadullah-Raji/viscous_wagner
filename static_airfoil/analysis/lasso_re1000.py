@@ -4,8 +4,8 @@ Run with: /home/raji/miniconda3/envs/research/bin/python analysis/lasso_re1000.p
 
 Repeats the analysis of lasso_reg.py / lasso_path.py (degree-9 polynomial in
 theta [rad], standardized, Lasso at lambda = 1e-4, LARS path) on the Re=1000
-steady (SIMPLE) sweep in steady_re1000/, and on the Re=500 sweep in
-steady_re500/ restricted to the SAME angle grid, so the two are comparable
+steady (SIMPLE) sweep in NACA0012/steady_re1000/, and on the Re=500 sweep in
+NACA0012/steady_re500/ restricted to the SAME angle grid, so the two are comparable
 point for point.  Then three checks that the Lasso selection alone cannot give:
 
   * leave-one-out cross-validated lambda (is 1e-4 a sensible penalty?),
@@ -50,11 +50,12 @@ MUTED, INK = "#9a9893", "#52514e"
 
 
 def collect(re, base=None):
-    """Steady cases at one Re.  `base` overrides the folder (e.g. steady_naca0006_re500)."""
+    """Steady NACA0012 cases at one Re.  `base` overrides the folder, relative to static_airfoil/
+    (e.g. "NACA0006/steady_re500")."""
     rows = []
-    base = ROOT / base if base else ROOT / f"steady_re{re}"
+    base = ROOT / base if base else ROOT / "NACA0012" / f"steady_re{re}"
     if not base.is_dir():                    # Re-scaling sweep (200..900) lives one level down
-        base = ROOT / "steady_re_scaling" / f"steady_re{re}"
+        base = ROOT / "NACA0012" / "steady_re_scaling" / f"steady_re{re}"
     for case in base.glob("steady_aoa*"):
         try:
             a = float(case.name.removeprefix("steady_aoa"))

@@ -17,14 +17,14 @@
 #
 # Usage:  ./edit.sh [-n] [case-glob]      -n = dry run
 #         ./edit.sh -n                    show what would change
-#         ./edit.sh                       fix re500_aoa* (default)
-#         ./edit.sh 'bi_point_search/*'   some other set
+#         ./edit.sh                       fix NACA0012/re500_aoa* (default)
+#         ./edit.sh 'NACA0012/bi_point_search/*'   some other set
 
 set -uo pipefail
 
 DRY=0
 [ "${1-}" = "-n" ] && { DRY=1; shift; }
-GLOB="${1-re500_aoa*}"
+GLOB="${1-NACA0012/re500_aoa*}"
 
 # Top-level 0/ only. -maxdepth 3 keeps processor*/0/* out (those are depth 4
 # and are written by decomposePar in the standard banner format anyway).

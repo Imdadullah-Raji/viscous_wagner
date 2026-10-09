@@ -96,7 +96,7 @@ def amplitude_spectrum(t, y, n_orbits=None, f_fund=None):
 
 def stats(aoa, root=ROOT):
     """Converged-window statistics for one angle."""
-    case = os.path.join(root, f"re500_aoa{aoa}")
+    case = os.path.join(root, "NACA0012", f"re500_aoa{aoa}")
     t, cl, cd = load_series(case)
     tc = t_conv_of(case, aoa)
     sel = t >= tc

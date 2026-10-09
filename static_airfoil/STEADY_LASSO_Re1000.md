@@ -61,12 +61,12 @@ Topology, cell count, far field and TE resolution are otherwise identical.
   11.5°.
 - **Extension:** 14, 16, 18 and 20°, kept out of the fit.
 - **Execution:** sequential at **6 MPI ranks per case, one case at a time**, as you specified,
-  using `STEADY_DIR=steady_re1000 ./run_steady.sh`. Wall time ran from about 150 s per case at
+  using `STEADY_DIR=NACA0012/steady_re1000 ./run_steady.sh`. Wall time ran from about 150 s per case at
   low angles to about 380 s at 20°, roughly 1 h 45 min in total including the 12° pilot.
 
 ### Convergence, judged on the force trace
 
-`python3 analysis/steady_summary.py --root steady_re1000`:
+`python3 analysis/steady_summary.py --root NACA0012/steady_re1000`:
 
 - **0–12°: all CONVERGED.** The C_L range over the last 10 % of iterations is ≤ 1e-8 at every
   angle.
@@ -299,7 +299,7 @@ already below 0.5 % of C_L.
    with time-averaged C_L.
 2. **No mesh-independence study at Re=1000.** The mesh is the Re=500 M2 mesh with Blasius-scaled
    h₁, and the only external check is the 2.5 % agreement at 10° with August's different mesh.
-   `mesh_convergence_M1/` exists for Re=500 only.
+   `NACA0012/mesh_convergence_M1/` exists for Re=500 only.
 3. **A different 25-point grid from your Re=500 run.** For a like-for-like comparison, both Re
    here use the same 25 angles, so Re=500 includes 10.5° and 11.5°, which `lift_coeffs.csv`
    omits. Your 23-point Re=500 path shows the same structure (θ, θ³ and a small θ⁹ at 1e-4), so
@@ -311,10 +311,10 @@ already below 0.5 % of C_L.
 
 **Re=500 steady cases moved.** All 49 `steady_aoa*` case directories, their 49 `*.build.log`,
 `run_steady.log` and `run_steady_serial_aborted.log` moved from the repo root into
-**`steady_re500/`**. Nothing was deleted. `lift_coeffs.csv` stays at the root because six analysis
+**`NACA0012/steady_re500/`**. Nothing was deleted. `lift_coeffs.csv` stays at the root because six analysis
 scripts read it from there.
 
-**New Re=1000 data, in `steady_re1000/`:**
+**New Re=1000 data, in `NACA0012/steady_re1000/`:**
 
 - `steady_aoa{0..11.5 step 0.5, 12, 14, 16, 18, 20}/` and their build logs
 - `sweep.sh`, the driver that built and ran the sweep
@@ -336,16 +336,16 @@ so the figures above are never overwritten.
 
 | script | change |
 |---|---|
-| `run_steady.sh` | cases resolved under `$STEADY_DIR`, default `steady_re500` |
-| `extract_lift_coeffs.sh` | optional `[caseRoot] [out.csv]`, default `steady_re500` → `lift_coeffs.csv` |
-| `analysis/steady_summary.py` | `--root` (default `steady_re500`); fractional angles listed; the Re=500 unsteady-mean table is printed only for `steady_re500` |
-| `analysis/fit_odd_cubic_8deg.py`, `analysis/check_odd_cubic.py` | glob `steady_re500/steady_aoa*` |
+| `run_steady.sh` | cases resolved under `$STEADY_DIR`, default `NACA0012/steady_re500` |
+| `extract_lift_coeffs.sh` | optional `[caseRoot] [out.csv]`, default `NACA0012/steady_re500` → `lift_coeffs.csv` |
+| `analysis/steady_summary.py` | `--root` (default `NACA0012/steady_re500`); fractional angles listed; the Re=500 unsteady-mean table is printed only for `NACA0012/steady_re500` |
+| `analysis/fit_odd_cubic_8deg.py`, `analysis/check_odd_cubic.py` | glob `NACA0012/steady_re500/steady_aoa*` |
 | `CLAUDE.md` | command block updated |
 
 ## Reproduce
 
 ```bash
-python3 analysis/steady_summary.py --root steady_re1000
+python3 analysis/steady_summary.py --root NACA0012/steady_re1000
 /home/raji/miniconda3/envs/research/bin/python analysis/lasso_re1000.py
-# rerun the sweep (rebuilds cases):  steady_re1000/sweep.sh
+# rerun the sweep (rebuilds cases):  NACA0012/steady_re1000/sweep.sh
 ```

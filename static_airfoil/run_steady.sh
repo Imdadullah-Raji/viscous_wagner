@@ -1,7 +1,7 @@
 #!/bin/bash
-# [STEADY_DIR=steady_re1000] run_steady.sh <aoa> [<aoa> ...]
+# [STEADY_DIR=NACA0012/steady_re1000] run_steady.sh <aoa> [<aoa> ...]
 #
-# Cases live in $STEADY_DIR/steady_aoa<A> (default steady_re500).
+# Cases live in $STEADY_DIR/steady_aoa<A> (default NACA0012/steady_re500).
 #
 # Runs steady (SIMPLE) cases SEQUENTIALLY at 6 MPI ranks each.
 #
@@ -18,7 +18,7 @@
 # Convergence is NOT assumed -- checked afterwards on the C_L trace itself
 # (analysis/steady_summary.py), not on solver residuals alone, because a
 # residual can stall low while the force is still creeping.
-cd "$(dirname "$0")/${STEADY_DIR:-steady_re500}" || exit 1
+cd "$(dirname "$0")/${STEADY_DIR:-NACA0012/steady_re500}" || exit 1
 source /opt/openfoam-dev/etc/bashrc >/dev/null 2>&1
 NP=6
 

@@ -74,7 +74,7 @@ PER_CYCLE=32
 TOL=${TOL:-0.01}
 
 # DT_FIXED -- hold dt at this value and disable the Courant re-tune entirely.
-#   DT_FIXED=5.5726e-4 ./run_staged.sh re500_aoa18 6
+#   DT_FIXED=5.5726e-4 ./run_staged.sh NACA0012/re500_aoa18 6
 # For a POD run the re-tune is free money: dt only has to keep Co in band, and
 # a change between chunks costs one Euler step.  For a STABILITY measurement it
 # is not free.  analysis/growth_rate.py fits an exponential to the C_L envelope

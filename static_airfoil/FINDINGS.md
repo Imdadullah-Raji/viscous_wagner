@@ -1,5 +1,9 @@
 # FINDINGS
 
+> **Path note (2026-10-09):** case folders have since moved under `NACA0012/` (e.g. `re500_aoa30/` is now
+> `NACA0012/re500_aoa30/`, `steady_re500/` is now `NACA0012/steady_re500/`). The text below keeps the paths
+> as they were when it was written. See CLAUDE.md, "Folder layout".
+
 Measurement log for the **Re=500 static-airfoil** campaign. Every number here was
 measured on this machine unless explicitly marked as an estimate.
 

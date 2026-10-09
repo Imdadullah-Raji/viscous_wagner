@@ -19,14 +19,14 @@
 # Sequential at 6 ranks: 6 PHYSICAL cores, and concurrent jobs oversubscribe.
 cd "$(dirname "$0")"
 MESH=meshes/M2_ns160_nr180_b025.msh
-# Seed case, overridable:  SRC=re500_aoa16 ./run_onset.sh 14
+# Seed case, overridable:  SRC=NACA0012/re500_aoa16 ./run_onset.sh 14
 # Default is AoA 20 -- the strongest well-characterised period-1 state, right for
 # seeding angles a few degrees away.  For an angle expected to be BELOW onset,
 # override to the nearest shedding angle instead: the decay only becomes a linear
 # eigenvalue once the amplitude is small, so starting from the smallest available
 # saturated amplitude (AoA 16, A=0.0694, vs AoA 20's 0.1403) reaches that regime
 # sooner, and the nearer angle also means less far-field readjustment to ride out.
-SRC=${SRC:-re500_aoa20}
+SRC=${SRC:-NACA0012/re500_aoa20}
 NP=6
 
 # dt IS FROZEN, AND THE SAME FROZEN VALUE IS USED AT EVERY ANGLE.  Two reasons,
@@ -51,7 +51,7 @@ export DT_FIXED=0.0005572582892
 [ -d "$SRC" ] || { echo "ABORT: seed case $SRC does not exist"; exit 1; }
 
 for AOA in "$@"; do
-  CASE=re500_aoa$AOA
+  CASE=NACA0012/re500_aoa$AOA
   echo "=============================================================="
   if [ -d $CASE/processor0 ]; then
     echo "$(date '+%F %T')  AoA $AOA  (already seeded -- resuming)"

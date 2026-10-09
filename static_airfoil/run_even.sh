@@ -18,15 +18,15 @@ NP=6
 for pair in "22 20" "24 22"; do
   set -- $pair; AOA=$1; SRC=$2
   echo "=============================================================="
-  if [ -d re500_aoa$AOA/processor0 ]; then
+  if [ -d NACA0012/re500_aoa$AOA/processor0 ]; then
     echo "$(date '+%F %T')  AoA $AOA  (already seeded -- resuming)"
   else
     echo "$(date '+%F %T')  AoA $AOA  (warm start from AoA $SRC)"
-    ./make_case.sh   re500_aoa$AOA 500 $AOA $MESH
-    ./warm_start.sh  re500_aoa$SRC latestTime re500_aoa$AOA $NP
+    ./make_case.sh   NACA0012/re500_aoa$AOA 500 $AOA $MESH
+    ./warm_start.sh  NACA0012/re500_aoa$SRC latestTime NACA0012/re500_aoa$AOA $NP
   fi
-  ./run_staged.sh  re500_aoa$AOA $NP
+  ./run_staged.sh  NACA0012/re500_aoa$AOA $NP
   echo "$(date '+%F %T')  AoA $AOA done"
-  python3 analysis/limit_cycle.py re500_aoa$AOA
+  python3 analysis/limit_cycle.py NACA0012/re500_aoa$AOA
 done
 echo "$(date '+%F %T')  BOTH ANGLES COMPLETE"

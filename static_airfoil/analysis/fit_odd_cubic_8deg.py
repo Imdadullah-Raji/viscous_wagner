@@ -24,7 +24,7 @@ def main():
     angles, y = train.iloc[:, 0].to_numpy(), train.iloc[:, 1].to_numpy()
     model = LinearRegression().fit(design(angles), y)
     rows = [(a, cl, "Training") for a, cl in zip(angles, y)]
-    for case in (root / "steady_re500").glob("steady_aoa*"):
+    for case in (root / "NACA0012" / "steady_re500").glob("steady_aoa*"):
         if not case.is_dir():
             continue
         angle = float(case.name.removeprefix("steady_aoa"))

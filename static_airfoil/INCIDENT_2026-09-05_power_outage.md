@@ -1,5 +1,9 @@
 # Incident: power outages during the Re=500 sweep
 
+> **Path note (2026-10-09):** case folders have since moved under `NACA0012/` (e.g. `re500_aoa30/` is now
+> `NACA0012/re500_aoa30/`, `steady_re500/` is now `NACA0012/steady_re500/`). The text below keeps the paths
+> as they were when it was written. See CLAUDE.md, "Folder layout".
+
 Two events, 2026-09-05 (AoA 22) and 2026-09-07 (AoA 16). Sections 1-9 are the
 first; section 10 is the second and the two verification lessons it added.
 

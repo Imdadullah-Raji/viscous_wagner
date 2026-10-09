@@ -38,7 +38,7 @@ def main():
     a, b = best.x
     cubic = np.linalg.lstsq(np.column_stack((np.ones(len(x)), x, x**3)), y, rcond=None)[0]
     rows = [(d, cl, 'training', 'CONVERGED') for d, cl in zip(degrees, y)]
-    case_root = ROOT/'steady_re500' if (ROOT/'steady_re500').is_dir() else ROOT
+    case_root = ROOT/'NACA0012'/'steady_re500' if (ROOT/'NACA0012'/'steady_re500').is_dir() else ROOT
     for case in case_root.glob('steady_aoa*'):
         if not case.is_dir():
             continue

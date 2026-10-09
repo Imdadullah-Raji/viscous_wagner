@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# extract_lift_coeffs.sh [caseRoot] [out.csv]  (default: steady_re500 -> lift_coeffs.csv)
-src="${1:-steady_re500}"
+# extract_lift_coeffs.sh [caseRoot] [out.csv]  (default: NACA0012/steady_re500 -> lift_coeffs.csv)
+src="${1:-NACA0012/steady_re500}"
 out="${2:-lift_coeffs.csv}"
 > "$out"
 

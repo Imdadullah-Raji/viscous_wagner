@@ -69,10 +69,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tol", type=float, default=1e-4,
                     help="fractional C_L range over the last 10%% of iterations")
-    ap.add_argument("--root", default=os.path.join(ROOT, "steady_re500"),
-                    help="directory holding steady_aoa<A> cases (default steady_re500)")
+    ap.add_argument("--root", default=os.path.join(ROOT, "NACA0012", "steady_re500"),
+                    help="directory holding steady_aoa<A> cases (default NACA0012/steady_re500)")
     args = ap.parse_args()
-    is_re500 = os.path.basename(os.path.normpath(args.root)) == "steady_re500"
+    # the unsteady comparison exists only for the NACA0012 Re=500 campaign
+    is_re500 = os.path.realpath(args.root) == os.path.realpath(os.path.join(ROOT, "NACA0012", "steady_re500"))
 
     def angle(path):
         try:

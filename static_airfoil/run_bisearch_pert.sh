@@ -31,7 +31,7 @@ NP=6
 DT=0.0005572582892
 CHUNK=20
 TMAX=${TMAX:-60}
-D=bi_point_search
+D=NACA0012/bi_point_search
 
 for A in "$@"; do
   SRC=$(awk -v a="$A" 'BEGIN{printf "%.1f", a+0.5}')

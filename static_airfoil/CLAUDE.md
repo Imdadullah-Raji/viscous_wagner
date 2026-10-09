@@ -2,168 +2,390 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Snapshot of `static_airfoil/` as of 2026-10-06. The authoritative, longer guide is the root
-`CLAUDE.md`; this file condenses it and adds the steady-lift fitting layer built on 2026-10-06,
-which the root file only partly describes.
+2D laminar CFD campaign on a static NACA0012 (OpenFOAM-dev), producing field/force
+data for a POD-based reduced-order-model thesis. Scope and matrix live in
+`experiment_plan.md`; the wider campaign (pitching, step-change, actuated) is in
+`../plan/simulation_plan.md`.
 
-## What this repository is
-
-A 2D laminar CFD campaign on a static NACA0012 (OpenFOAM-dev), producing force and field data for
-a POD reduced-order-model thesis. It has two strands:
-
-1. **Unsteady shedding at Re = 500**: staged transient runs, limit-cycle detection, period
-   doubling, and the eigenvalue-measured onset α_c = 11.46°. Records live in `FINDINGS.md`,
-   `BIFURCATION_THEORY.md` and `ANALYSIS_GLOSSARY.md`.
-2. **Steady-branch lift fitting at Re = 100, 500, 1000, 2000**: SIMPLE sweeps, odd-polynomial,
-   Lasso and Legendre fits, and an Re-scaling of the cubic term. Records live in
-   `STEADY_LASSO_Re1000.md` and `STEADY_LASSO_ReSweep.md`, and the reader-facing PDF is
-   `reports/steady_lift_fits/`.
-
-Task requests sometimes arrive as files in `instructions/` (for example `oct6_reSweep.md`); read
-that folder when asked.
+**Read the prior campaign's findings before changing solver settings.** The August
+Re=1000 work lives at `~/OpenFOAM/raji-dev/run/Aug/unsteadyRe1000/` and its
+`FINDINGS.md` is the authoritative record: shedding onset, a silent solver pathology,
+and a mesh-independence study. `NACA0012/aoa10/` in this repo is a hand-edited *derivative* of
+`unsteadyRe1000/AOA_10fine/` and disagrees with it (`nOuterCorrectors 2` vs 1,
+`numberOfSubdomains 4` vs 6, `writeInterval 0.025` vs 5) -- treat the upstream case as
+the source of truth, not the copy here.
 
 ## Environment
 
-- **OpenFOAM:** `source /opt/openfoam-dev/etc/bashrc`. The solver is `foamRun` with
-  `solver incompressibleFluid`.
-- **Post-processing:** use `foamPostProcess -solver incompressibleFluid`. Plain `postProcess`
-  cannot build the transport model.
-- **Python:** `/home/raji/miniconda3/envs/research/bin/python`. Only this env has gmsh, sklearn,
-  pandas and scipy, and system `python3` lacks pandas. Plain `python3` works only for the
-  numpy-only scripts (`steady_summary.py`, `limit_cycle.py`, `growth_rate.py`).
-- **6 physical cores.** Budget 6 MPI ranks in total across all jobs, and run cases sequentially:
-  one 6-rank job is faster than 3+3 or 2+2+2 (measured several times).
-- **LaTeX:** pdflatex/latexmk (TeX Live 2022) is installed; `siunitx` is not.
+- **OpenFOAM**: `source /opt/openfoam-dev/etc/bashrc` (OpenFOAM.org dev, build `dev-84333c37c7aa`).
+  Solver is `foamRun` with `solver incompressibleFluid;` in `controlDict`.
+- **gmsh Python API lives only in the `research` conda env.** System `python3` has no
+  `gmsh` module. Use `/home/raji/miniconda3/envs/research/bin/python` for anything
+  under `meshing/`; plain `python3` is fine for `analysis/`.
+- **This box has 6 PHYSICAL cores, not 12.** i5-12400, 6 cores / 12 threads; `nproc`
+  reports hyperthreads. `mpirun -np 8` fails with "not enough slots". Two concurrent
+  4-rank jobs oversubscribe the 6 physical cores and cost ~1.7x per step (measured:
+  0.059 -> 0.102 s/step). Budget **6 MPI ranks total** across all running jobs.
+- 23 GB RAM.
 
 ## Commands
 
 ```bash
-# mesh: the M2 recipe; only --re changes (first cell h1 = 0.05/sqrt(Re), so a mesh is Re-specific)
-cd meshing && /home/raji/miniconda3/envs/research/bin/python mesher.py \
-    ../meshes/M2_ns160_nr180_b025_re<RE>.msh --re <RE> -r 30 --nr 180 --ns 160 --nte 32 --bump 0.25
-#   (Re=500's file is meshes/M2_ns160_nr180_b025.msh; the recipe reproduces it byte for byte)
+# mesh  (h1 = 0.05/sqrt(Re) -> a mesh is Re-SPECIFIC)
+cd meshing && /home/raji/miniconda3/envs/research/bin/python mesher.py OUT.msh \
+    --re 500 -r 30 --nr 250 --ns 200 --nte 40 --bump 0.08
 
-# steady (SIMPLE) sweep: cases live in steady_re<RE>/steady_aoa<A>
-./make_steady.sh steady_re<RE>/steady_aoa<A> <RE> <A> <mesh.msh> [nIter=6000]
-STEADY_DIR=steady_re<RE> ./run_steady.sh 0 0.5 1 ...    # sequential, 6 ranks each; default dir steady_re500
-steady_re<RE>/sweep.sh                                   # the per-Re driver that built + ran a sweep
-python3 analysis/steady_summary.py --root steady_re<RE>  # verdict per angle, judged on the C_L trace
+./make_case.sh <caseDir> <Re> <AoA_deg> <mesh.msh>   # full case + gmshToFoam + checkMesh
+./run_staged.sh <caseDir> [nCores]                   # two-stage run, default 4
+./warm_start.sh <src> <srcTime|latestTime> <dst> [np]  # seed dst from a converged src
+./bench_mesh.sh <mesh.msh> <label>                   # throwaway case -> Co + s/step + ETA
 
-# unsteady
-./make_case.sh <caseDir> <Re> <AoA> <mesh.msh>
-./run_staged.sh <caseDir> 6                  # phase 0 -> phase 1 (forces) -> phase 2 (fields)
-NO_FIELDS=1 ./run_staged.sh <caseDir> 6      # stop after phase 1: "does it shed?", forces only
-DT_FIXED=<dt> ./run_staged.sh <caseDir> 6    # freeze dt for growth-rate (sigma) measurements
-python3 analysis/limit_cycle.py <caseDir>    # KEY=VALUE: SHEDDING, ORDER, FREQ, CONVERGED, ...
-python3 analysis/growth_rate.py <caseDir>    # envelope sigma; < 0 means decaying
+./run_onset.sh 18 16      # shedding-onset sweep: every angle seeded from AoA 20,
+                          # dt frozen, so sigma is comparable across angles
 
-# steady-lift fits (research env)
-PY=/home/raji/miniconda3/envs/research/bin/python
-$PY analysis/lasso_re1000.py [--re 100 500 1000 2000] [--amax 8] [--odd]
-(cd analysis && $PY legendre_odd_fit.py --amax 8)   # odd Legendre fit + rewrite into powers of theta
-(cd analysis && $PY cubic_vs_re.py)                 # OLS b1, b3 vs Re, power law
-(cd analysis && $PY explain_figs.py)                # explainer figures for the PDF report
-cd reports/steady_lift_fits && latexmk -pdf steady_lift_fits.tex && latexmk -c
+python3 analysis/limit_cycle.py <caseDir> [--tol 0.01]   # KEY=VALUE, eval-able from sh
+python3 analysis/growth_rate.py <caseDir> [--tmin T]     # C_L envelope sigma; SIGMA<0 => below onset
+./make_steady.sh <caseDir> <Re> <AoA> <mesh.msh> [nIter]  # SIMPLE base flow
+./run_steady.sh 24 22 20 ... 0    # sequential, 6 MPI ranks each (NOT 6 serial
+                                  # jobs -- that was 4.2x slower per case)
+                                  # cases live in NACA0012/steady_re500/ (default) or
+                                  # STEADY_DIR=NACA0012/steady_re1000 ./run_steady.sh ...
+python3 analysis/steady_summary.py [--root NACA0012/steady_re1000]  # Cl_steady + convergence,
+                                         # judged on the FORCE trace, never on residuals
+/home/raji/miniconda3/envs/research/bin/python analysis/lasso_re1000.py
+                                         # Re500 vs Re1000 Lasso -> STEADY_LASSO_Re1000.md
+python3 analysis/plot_steady.py          # lift curve + mean-flow distortion
+                                         # -> analysis/figs/steady_vs_mean.png
+
+./run_marginal.sh 11.5 12.0 0.1 120.5    # eigenvalue run near onset (blended seed)
+python3 analysis/blend_fields.py <A> <B> <eps> <out>     # out = A + eps*(B-A)
+python3 analysis/eigenvalue.py <case> --cl-steady <Cl> --freq <f>  # ALWAYS pass --freq
+python3 analysis/plot_eigenvalue.py                      # sigma(alpha) -> onset
+                                                         # -> analysis/figs/eigenvalue_onset.png
+
+python3 analysis/campaign_data.py         # one table: Cl/Cd mean, min, max, order,
+                                          # f_carrier -- every figure reads from here
+python3 analysis/plot_psd.py              # C_L/C_D amplitude spectra, one figure per
+                                          # angle -> analysis/figs/PSD/psd_aoa<NN>.png
+python3 analysis/plot_coeffs_vs_aoa.py    # Cl, Cd, Cl/Cd vs AoA with the limit-cycle
+                                          # min/max and both bifurcations marked
+                                          # -> analysis/figs/coeffs_vs_aoa.png (+ panels)
+
+python3 analysis/plot_onset.py                           # A^2 vs AoA (FALSIFIED, kept as a record)
+                                                         # -> analysis/figs/onset_amplitude.png
+python3 analysis/plot_cl.py                              # C_L histories + period-2 saturation
+                                                         # -> analysis/figs/*.png
+
+# post-processing: plain `postProcess` CANNOT construct the momentum transport model
+foamPostProcess -solver incompressibleFluid -time 90:100
 ```
 
-There is no test suite. Correctness is checked by regression: rerun a script with its default
-arguments and `diff` the `lasso_summary.txt` it writes against the previous copy. Every change to
-`lasso_re1000.py` so far has been checked this way.
+## Architecture
 
-## Architecture: the big picture
+### Folder layout: cases are grouped by section (since 2026-10-09)
 
-### Angle of attack is a property of the inflow, not the mesh
+Scripts, meshes, `analysis/`, `lsb/` and the write-ups stay at the root. **Case folders live under the
+section they belong to**, and every driver and loader resolves its paths there:
 
-One mesh serves every angle at a given Re. `make_case.sh` writes the angle into three places from
-one computation: `0/U`, the `forceCoeffs` lift and drag directions, and `Cp`'s `UInf`. Never edit
-one of them by hand. This is also why `warm_start.sh` can map fields 1:1 between angles; it checks
-mesh md5 because meshes differ across Re.
+- `NACA0012/`: `steady_re{100,500,1000,2000}/`, `steady_re_scaling/steady_re<RE>/`, the unsteady
+  Re=500 campaign `re500_aoa{12..30}/`, `aoa10/`, `unsteady_re2000/`, `bi_point_search/` and
+  `mesh_convergence_M1/`.
+- `NACA0006/`: `steady_re500/` (formerly `steady_naca0006_re500/`), `steady_re500_fine/`, and
+  `steady_re_scaling/steady_re<RE>/`.
+- `collect(re)` (`analysis/lasso_re1000.py`) reads NACA0012. `collect(re, "NACA0006/steady_re500")`
+  reads any other folder, relative to this directory.
+- `run_steady.sh` defaults to `STEADY_DIR=NACA0012/steady_re500`.
+- New drivers must create cases under the section folder too, e.g. `NACA0012/re500_aoa$A`.
+- **Older text uses the old paths.** `FINDINGS.md`, `INCIDENT_*.md`, run logs and `claude_md/`
+  predate the move and keep the old root-level paths: prefix `NACA0012/` when reading them.
+- The plate lives in `../plate_case/re<RE>/`.
 
-Reference values: `Aref 0.1` (chord × span), `lRef 1`, `magUInf 1`.
+### `meshing/` — layered so the arithmetic is testable without gmsh
 
-`gmshToFoam` resets patch types, so `make_case.sh` retypes `frontAndBack` → `empty` and
-`airfoil` → `wall`.
+`airfoil.py` (pure numpy) → `mesh_math.py` (pure arithmetic) → `mesher.py` (gmsh).
+Neither of the first two imports gmsh, so geometry and spacing can be diffed and
+plotted standalone. Contracts `mesher.py` depends on, documented in `airfoil.py`:
+`upper`/`lower` both run LE→TE and **share an identical first row** — the LE point
+must be created once and its tag reused, or the splines never close the curve loops.
 
-`make_steady.sh` wraps `make_case.sh` and changes only three things: ddt becomes `steadyState`,
-2 non-orthogonal correctors, and relaxation U 0.7 / p 0.3. The schemes are kept identical on
-purpose, so that steady and unsteady differ only in the time derivative.
+`mesher.py.__main__` is the production path: a 3-block transfinite O-ring
+(upper/lower/wake) extruded 0.1 in z, tagged `internal`/`airfoil`/`farfield`/`frontAndBack`.
+`wake_half_angle` picks `theta_w = pi*nte/(2*ns+nte)` so the far-field circle is
+discretised uniformly; any other value leaves a visible kink at the cut lines.
 
-### Staged unsteady runs (`run_staged.sh` + `system/functions`)
+**`outer_domain.py` is not used by the production path.** It is a separate,
+self-contained alternative (rectangular outer domain + wake refinement boxes wrapped
+around the ring) with its own `__main__`. Don't assume it participates.
 
-- **Phase 0:** impulsive start at dt = 4e-5 to t = 0.5. Courant is measured *at* t = 0.5.
-- **Phase 1:** field-free chunks of 20 time units, with dt re-tuned only between chunks.
-  `adjustTimeStep` is `no` everywhere. The loop exits when `limit_cycle.py` reports
-  `CONVERGED=yes`.
-- **Phase 2:** fields at ≥ 32 samples per carrier period for 20 orbits.
-- **`DT_MAX = 6e-4` is the real stability limit, not Courant.** A diverged chunk is retried at
-  dt/2, and its `forceCoeffs/<restart>/` is quarantined to `.diverged/` first.
-- **Stopping a run early:** kill the `run_staged.sh` driver *before* `mpirun`. Killing the solver
-  alone looks like a divergence and triggers the quarantine-and-retry.
-- **`system/functions` is byte-identical across stages.** `forceCoeffs` runs every step into one
-  `.dat`; field function objects fire only at write times.
-- **Restarts split the force series** across `postProcessing/forceCoeffs/<restartTime>/` with
-  duplicated times at the seams. Concatenate, sort, and keep the last sample per time.
-- **Count time directories by value** (`213`, not `213.0`).
+### AoA is imposed by rotating the freestream, not the mesh
 
-### Two periods once the wake period-doubles
+This is the single most important thing to know. One mesh serves every angle at a
+given Re. The angle appears in **three** places and `make_case.sh` writes all of them
+from one computation: `0/U` `internalField` + `freestreamValue`, `functions`
+`dragDir`/`liftDir`, and `Cp`'s `UInf`. Editing one by hand yields a plausible but
+wrong `C_L`. It is also what makes `warm_start.sh` exact.
 
-`limit_cycle.py` reports both the carrier (`SAMPLE_PERIOD`, which drives `writeInterval`) and the
-fundamental (`PERIOD`, which drives run length and the convergence window). Never identify a
-frequency by peak height. Always go through `spectral_structure()`, and pass `--freq` to
-`eigenvalue.py`.
+Reference values follow from c=1, U=1, span=0.1: `lRef 1`, **`Aref 0.1`** (c*span, not
+1.0), `magUInf 1`, `rhoInf 1` (pressure is kinematic).
 
-### Steady-branch data and its traps
+`gmshToFoam` resets every patch to type `patch`. `make_case.sh` retypes
+`frontAndBack`→`empty` (mandatory — otherwise it is a 3D run one cell thick) and
+`airfoil`→`wall`.
 
-- **SIMPLE convergence is judged on the force trace** (`steady_summary.verdict`):
-  - `CONVERGED`: the range over the last 10 % is below tolerance.
-  - `CREEPING`: the range is still shrinking.
-  - `LIMIT-CYCLE`: the range is flat across windows, so the base flow is strongly unstable and
-    the last iterate is *not* a fixed point.
+### The staging contract — spans `run_staged.sh` and `system/functions`
 
-  Only `CONVERGED` cases enter any fit.
-- **A converged steady solve is not evidence the flow is steady.** Above the onset the shedding
-  mean sits far above the steady value; even the minimum instantaneous C_L is above it.
-- **Where SIMPLE first oscillates:** Re = 100 never (to 20°), Re = 500 at 22°, Re = 1000 at 14°,
-  Re = 2000 at 9.5°. The physical onset lies at or below these angles. It is measured only at
-  Re = 500 (11.46°); Re = 1000 is bracketed at 8–10°; Re = 2000 is known only to shed at 9.5°.
+`system/functions` is **byte-identical in both stages**; field output is controlled
+entirely by `controlDict`. Do not "fix" this by maintaining two functions files.
 
-### Fitting layer (`analysis/`)
+- `forceCoeffs` is on `writeControl timeStep`. It appends to a single
+  `postProcessing/forceCoeffs/<startTime>/*.dat` and **never creates a time
+  directory**, so per-step `C_L`/`C_D` through the transient costs nothing.
+- `Cp`, `wallShearStress`, `surfaces` are on `executeControl writeTime` — they fire
+  only when the case writes fields. A field-writing FO on `timeStep` mints a new time
+  directory every `deltaT` containing only that field and no `U`/`p`.
 
-- **`lasso_re1000.py`** is the shared engine. Despite the name it takes any list of Re: `collect()`
-  loads one Re's steady cases with their verdicts, `analyse()` runs the LARS path, Lasso at
-  λ = 1e-4, LOO-CV, a 500-resample bootstrap, and OLS cubic/quintic fits.
-  - **Output folders:** the defaults (Re 500 vs 1000, 0–12°) write to `figs/re1000_steady/`.
-    Other choices go to `re1000_steady_0to<amax>deg[_odd]/` or `resweep_steady_...`, so earlier
-    figures are never overwritten.
-  - **Other scripts import from it** (`collect`, `ROOT`).
-- **Symmetry:** C_L(−α) = −C_L(α), so only odd powers are physical. A Lasso that selects an even
-  power, such as θ⁴, is showing collinearity, not physics.
-- **Raw powers of θ are nearly collinear on 0–8°** (correlations 0.91–0.99, condition number
-  ~1e12 for θ¹..⁹). As a result, Lasso selection at fixed λ depends on the fit range, and
-  monomial coefficients above θ³ are unstable.
-- **The robust quantities** are the OLS b1 and b3, and the odd-Legendre coefficients on
-  x = θ/θ_max mirrored to [−1, 1] (condition number 2.7).
-- **Rewriting in θ:** a Legendre fit truncated at P_k equals the OLS fit in θ…θ^k. Quote θ-form
-  coefficients only at the truncation actually used.
-- **Data floor:** `forceCoeffs` writes ~7 significant digits, roughly 1e-7 in C_L. Coefficients
-  or residuals below that are rounding, not physics.
+Stages:
+1. **Phase 0** — impulsive start, `dt=4e-5` to `t=0.5`. **Measure Co at t=0.5, never
+   earlier.** Co peaks ~14x higher around `t=1e-3`; sampling inside that spike gives a
+   dt roughly 7x too small and an ETA ~7x too long.
+2. **Phase 1** — transient, field-free, in chunks. `writeInterval == endTime` gives
+   exactly one write per chunk, which is the restart point. (There is no `onEnd`
+   writeControl in this build; valid values are `timeStep, writeTime, outputTime,
+   adjustableRunTime, runTime, runTimes, clockTime, cpuTime, none`.) Loop exits when
+   `analysis/limit_cycle.py` reports `CONVERGED=yes`.
+3. **Phase 2** — fields at ≥32 samples per **measured** carrier period, for
+   `NCYCLES` **orbits**. Those are two different periods once the wake has
+   period-doubled; see below.
 
-### Plot conventions
+**The Courant number is not a stability criterion on this mesh — `DT_MAX` is.**
+Mean Co runs ~166x below max Co, because the max is set by a few trailing-edge
+cells and reports on nothing else. AoA 18 diverged at **Co = 0.60**, below both
+`RETUNE_CO` (0.75) and the `CO_HI` abort (0.80), after the re-tune grew dt onto
+the old `DT_MAX=1.0e-3` clamp; the real limit is the lagged non-orthogonal
+pressure correction on 64-degree cells, whose weight grows with dt while Co
+barely moves. `DT_MAX` is now **6.0e-4**, below the largest dt ever run to
+convergence here (6.331e-4, AoA 26). A diverged chunk is retried at dt/2 (twice,
+then it gives up) and its `postProcessing/forceCoeffs/<restart>/` is quarantined
+to `.diverged/` **before** the retry -- a retry restarts at the same time and so
+appends to that same directory, which would otherwise leave 1e204-magnitude
+samples in the series forever. See `FINDINGS.md` section 15.
 
-Each Re keeps one colour in every figure: Re 500 `#2a78d6`, 1000 `#eb6834`, 100 `#1baf7a`,
-2000 `#eda100`. Multi-series lift/drag figures use one shared legend below the panels, because a
-legend inside the axes covers data.
+**`DT_FIXED=<dt> ./run_staged.sh ...`** holds dt and disables re-tuning. Use it
+for anything that measures a *rate* rather than a converged state: the scheme's
+numerical damping is dt-dependent, so a re-tune mid-record puts a step into the
+envelope that `analysis/growth_rate.py` is fitting, and cross-angle sigma
+comparisons are only meaningful at one shared dt. `run_onset.sh` sets it.
 
-## Directory map (non-obvious parts only)
+`adjustTimeStep` is `no` everywhere — the variable-dt controller corrupted an earlier
+attempt. dt changes only *between* chunks, so it is rigorously fixed within any single
+`foamRun`. `writeInterval` is snapped **down** to an integer multiple of dt, which
+lands writes exactly on time steps without needing `adjustableRunTime` (that option
+perturbs dt and would reintroduce the problem). Each dt change costs one Euler step,
+since `backward` needs two old time levels and a restart has one.
 
-| path | contents |
+### Two periods, not one — the wake period-doubles
+
+Past some angle in (20°, 30°] at Re=500 the wake is no longer period-1: successive
+shedding cycles alternate and the orbit closes only after **two** oscillations of
+`C_L`. Measured at AoA 30: carrier f=0.3196, saturated subharmonic at f/2=0.1598
+carrying **63%** of the carrier's amplitude, all eight resolved peaks exact integer
+multiples of f/2 (max deviation 0.0000 — a closed period-2 orbit, not a torus).
+AoA 20 is period-1, with f/2 power at the 1e-5 noise floor.
+
+**The carrier is not always the tallest peak.** At AoA 30 the carrier dominates
+(subharmonic 0.67 of it); at AoA 28 the subharmonic dominates (carrier 0.67 of it) --
+same structure, flipped. `A(2f)/A(f)` cannot tell them apart (0.270 at period-2 AoA 30
+vs 0.195 at period-1 AoA 24), so `spectral_structure()` finds the two independently:
+`f_carrier` is the highest peak still carrying 50% of the maximum amplitude, `f_fund`
+the lowest peak above 5%, and `ORDER` their ratio, rejected unless within 0.15 of an
+integer. `SUBHARM_RATIO` is `A(f_fund)/A(f_carrier)` so it stays comparable across
+angles. See `FINDINGS.md` sections 12 and 13.
+
+**Never identify a frequency by peak height.** Three separate bugs came from it, the
+worst at AoA 26 where `SUBHARM_RATIO ~ 1` makes the tallest peak flip between windows
+on noise -- `D_FREQ` then compared a fundamental against a carrier, sat pinned at 0.496,
+and the run could never have converged. Anywhere the code needs to know *which*
+frequency it has, it must call `spectral_structure()`.
+
+Taking the largest spectral peak as "the" period gets **both** downstream decisions
+wrong, so `analysis/limit_cycle.py` reports two:
+
+| key | meaning | drives |
+|---|---|---|
+| `SAMPLE_PERIOD` | the **carrier** — fastest oscillation present | `writeInterval` |
+| `PERIOD` | the **fundamental** = `ORDER` × carrier — when the orbit closes | phase-2 `endTime`, convergence window |
+
+Using the carrier for run length records `NCYCLES/ORDER` orbits — AoA 30's "20 cycles"
+was 9.97. Using a window holding a non-integer number of fundamental periods makes the
+cycle-to-cycle alternation look like drift, which is what made a fully saturated AoA 30
+report `CONVERGED=no`. The window is now cut to a whole number of fundamental periods
+and split at the exact midpoint. `ORDER=1` recovers the old behaviour exactly, and
+every period-1 case was regression-checked as unchanged.
+
+The convergence gate tests `FULL_WINDOW` (was the window cut to length, or clamped by
+the start of the series?), **not** a recount of cycles inside it. The window is
+`2*n_per` fundamental periods by construction, so recounting it with a second, slightly
+different frequency estimate lands a hair under the requirement about half the time and
+blocks an otherwise-converged case. Measured on AoA 22: 5.99 cycles against 6.0 with
+every agreement test two orders of magnitude inside tolerance.
+
+Also reported: `SUBHARM_RATIO`, `HARMONIC_DEV` + `QUASIPERIODIC` (period-m vs
+Neimark–Sacker torus — a torus has incommensurate peaks), and `D_SUB`, the
+window-to-window agreement of the subharmonic. `D_SUB` matters because the subharmonic
+saturates **later** than the carrier: mean, amplitude and frequency can all agree while
+the orbit is still splitting.
+
+**Unresolved:** the onset angle is bracketed only to (20°, 30°]; the bifurcation has
+not been shown mesh- or dt-independent; and AoA 30 was warm-started, so bistability is
+not excluded. `FINDINGS.md` §9 has the numbers and the cheapest tests.
+
+`reconstructPar` runs only for `t >= t_conv`: phase-1 chunk writes are restart points,
+not snapshots, and must not enter the POD set. `t_conv` itself is one of those writes
+and sits **off** the phase-2 grid (0.0898 before the first sample, not 0.0972) -- drop
+it too.
+
+**Counting time directories:** OpenFOAM names them from the value, so a write on a
+whole number is `213`, not `213.0`, and `[0-9]*.[0-9]*` silently skips it. Use the
+`count_snaps` helper in `run_staged.sh`; a loader that globs on the decimal point will
+drop snapshots and mis-space its time axis.
+
+`extend_phase2.sh <case> <t_conv> <nOrbits> [nCores]` lengthens a finished phase 2 in
+place, holding `dt` and `writeInterval` fixed so the new snapshots continue the same
+uniform grid.
+
+### Restart caveat
+
+On restart `forceCoeffs` opens a **new** `postProcessing/forceCoeffs/<restartTime>/`
+directory, so the series is split across stage directories with duplicated times at the
+seams. `analysis/limit_cycle.py` concatenates, sorts by time, and keeps the last sample
+at each time. Any new force analysis must do the same.
+
+### Warm start
+
+`mapFields -consistent` is a direct 1:1 copy here, not an interpolation, because the
+meshes are bit-identical across AoA. `warm_start.sh` enforces that with an md5 of
+`points/faces/owner/neighbour` rather than trusting it — across different Re the
+meshes differ (`h1` is Re-dependent) and `-consistent` would be silently invalid.
+
+- `mapFields` is **not** an MPI app. Under `mpirun` it fails with
+  `Invalid option: -parallel`. It runs serially and reads decomposed cases itself via
+  `-parallelSource`/`-parallelTarget`.
+- It maps **volume fields only**, so `phi` is not transferred; the solver rebuilds it
+  from the mapped `U` and the first pressure solve absorbs the divergence error.
+- Keep the target's own `0/U`/`0/p`. `mapFields` overwrites values but preserves BC
+  definitions, so `freestreamValue` stays at the target angle. Copying the source time
+  directory instead would drag the source's far-field direction along with it.
+- **Do not rotate the velocity vectors.** The airfoil occupies the same cells in both
+  cases; the boundary layer and near wake are already correct, and the far field
+  self-corrects by advection within a few convective times.
+
+## Settings that were measured, not guessed
+
+Re=500, 110k-cell mesh, 4 cores. Re-measure before changing any of these.
+
+| change | result |
 |---|---|
-| `steady_re{100,500,1000,2000}/` | SIMPLE cases `steady_aoa<A>/`, build logs, `run_steady.log`, `sweep.sh`. All steady Re = 500 cases were moved here on 2026-10-06. |
-| `unsteady_re2000/re2000_aoa9.5/` | forces-only shedding check, stopped at t ≈ 30 once shedding was confirmed |
-| `re500_aoa*/` | Re = 500 staged unsteady cases (POD snapshots) |
-| `bi_point_search/`, `mesh_convergence_M1/` | self-contained studies with their own steady cases and scripts |
-| `lift_coeffs.csv` | the original Re = 500 lift table (23 angles, 0–12°). Several fit scripts read it from the repo root, so do not move it. |
-| `bizarre_experiments/` | one-off fits (A·x/√(1+Bx²) saturating model, Re = 500) |
-| `reports/steady_lift_fits/` | LaTeX report for a non-specialist reader; figures via `\graphicspath{../../analysis/figs/}` |
-| `aoa10/` | hand-edited derivative of an upstream August case. The upstream case is the source of truth. |
-| `~/OpenFOAM/raji-dev/run/Aug/unsteadyRe1000/FINDINGS.md` | prior Re = 1000 campaign. Read it before changing solver settings. |
+| `nOuterCorrectors 1` (PISO) vs `2` | **0.176 vs 0.416 s/step** — 2.4x, no accuracy cost at Co<1 with `backward` |
+| `nNonOrthogonalCorrectors 0` vs `1` | 0.650 vs 0.176 s/step — **slower**; max non-orthogonality is ~64°, keep it at 1 |
+| GAMG `nCellsInCoarsestLevel`/`pFinal 1e-7` | no measurable gain |
+| `bump` (LE clustering) 0.08→0.25 | no effect on Co; the LE is *not* the Courant limit |
+| `nte` (TE cells) | **this** sets the Courant limit — TE cells are the smallest in the mesh |
+
+Settled Courant at `dt=4e-5`, t=0.5: **0.0729** (110k, ns200/nte40/nr250) and **0.0282**
+(49.5k, ns150/nte30/nr150).
+
+See `FINDINGS.md` for the full measurement log and the reasoning behind each choice,
+`ANALYSIS_GLOSSARY.md` defines the diagnostic vocabulary (carrier vs fundamental,
+subharmonic ratio, the torus guard) for anyone reading the verdict lines,
+`BIFURCATION_THEORY.md` is the companion on the dynamical-systems side -- Hopf,
+Stuart-Landau, Floquet multipliers, where `A^2 = k(alpha - alpha_c)` comes from, and a
+table of which measurements the theory licenses and which it does not,
+and `INCIDENT_2026-09-05_power_outage.md` covers interruption recovery --
+including why phase 1 writes one field per chunk and why that write is not in the POD
+set.
+
+### The shedding onset is alpha_c = 11.46 deg, measured from eigenvalues
+
+**Do not quote 14.8, 13.0, or "below 14".** Those all came from extrapolating
+properties of the SATURATED state and were falsified in turn. The onset is now
+measured directly, by perturbing the steady base flow and fitting the growth rate
+of the f=0.600 mode:
+
+| AoA | `sigma` | R2 | verdict |
+|---|---|---|---|
+| 11.0 | **-0.07093** | 0.99999 | STABLE (decay over 2.2 decades) |
+| 11.5 | **+0.00674** | 1.00000 | UNSTABLE (growth, 63 t span) |
+| 12.0 | **+0.10970** | -- | UNSTABLE |
+
+Bracketed and crossing at **alpha_c = 11.46 +- 0.1 deg**, `dsigma/dalpha = 0.181`
+per degree. All three are the same mode, f=0.600 -- a complex pair, so the LINEAR
+onset is a Hopf even though the saturated states obey none of the weakly-nonlinear
+Hopf scalings. See `FINDINGS.md` section 19; figure
+`analysis/figs/eigenvalue_onset.png`.
+
+**Amplitude-based extrapolation cannot find this point, in principle.** `sigma`
+falls 16x between 12.0 and 11.5 deg (e-fold 9.1 t -> 148 t): the saturated
+amplitude collapses exactly where the timescale diverges. Three observables
+reject the weakly-nonlinear description over 14-24 deg -- amplitude exponent 0.79
+not 0.5, `f_carrier` not linear in alpha, and mean-flow distortion `~A^0.88` not
+`A^2` -- and all three follow from one geometric fact: **at every angle measured,
+the steady C_L lies BELOW the minimum instantaneous unsteady C_L**, by 0.44-0.94
+of a peak-to-peak. The limit cycle does not orbit the fixed point.
+
+### Measuring an eigenvalue: what the campaign learned the hard way
+
+`./run_marginal.sh <aoa> <srcAoA> <eps> [TMAX]` implements all of this.
+
+1. **Start AT the fixed point** (steady solve), never from a limit cycle. A
+   warm start from a saturated state left AoA 14 with a mean-flow displacement
+   **1.9x** the oscillation amplitude and no interpretable sigma.
+2. **Size the seed against the ATTRACTOR, not against habit.** Near onset the
+   attractor collapses: at 11.5 deg the standard `x_s(a+0.5)` seed is 2-3x too
+   big, so the perturbation decays ONTO the cycle and reads sigma<0. Blend with
+   `analysis/blend_fields.py` (eps~0.1) to land an order of magnitude below it.
+3. **Keep `phi`** by starting from the steady case itself -- but that only
+   REDUCES the startup jolt (9x, measured), it does not remove it. The low-dt
+   startup at 4e-5 is still required; skipping it diverged the run in 180 steps.
+4. **Always pass `--freq`** to `analysis/eigenvalue.py`. See below.
+5. **Check the SPAN before the R2.** An R2 of 0.999 over 6 t and 2-3 independent
+   points taught nothing at AoA 14; 63 t and 21 windows is a measurement.
+
+**Never identify a frequency by peak height -- this now has five instances.**
+The newest: `eigenvalue.py` tracked `Y.max()`, a decaying seed transient reached
+2.47e-4 at f=0.2 against the eigenmode's 1.9e-5, the tracker jumped between them,
+and the fit reported **sigma = -0.10 where the mode was at +0.0067** -- wrong
+sign. An `f_min` floor did NOT fix it (the transient reached exactly 0.2). Probe
+the frequency you want: `--freq 0.600011`.
+
+**A guard that checks for the absence of what you just deleted proves nothing.**
+A regex strip of `relaxationFactors` left `fields { p 0.3; }` and an orphan `}`
+at top level; `grep -q relaxationFactors` passed because the word was gone, and
+the malformed dictionary diverged the solver twice. Copy known-good files whole
+and validate with `foamDictionary`, which fails on any malformation rather than
+the one you anticipated.
+
+## Physics traps documented upstream
+
+- **A converged steady solve is not evidence the flow is steady.** `steadyState`
+  deletes the ddt term, so SIMPLE converges to a fixed point of the steady equations
+  whether or not it is stable. At alpha=10, Re=1000 it overpredicts Cl by 9.8%.
+- **`Re*sin(alpha)` does not predict shedding onset.** It is a bluff-body criterion
+  applied to a streamlined body; for an airfoil the wake width is set by where the
+  boundary layer separates. Do not use it to estimate shedding frequency either.
+  Measured at Re=1000: onset between 8 and 10 deg; f_shed 0.867 (alpha=10), 0.667
+  (alpha=15).
+- **`wallShearStress` returns `-devTau & n`** (`wallShearStress.C:82`), the negative of
+  the traction on the wall. Physical skin friction is the negation of the sampled
+  value; getting this backwards makes an attached boundary layer look 100% separated.
+- **The transient can go quiet and then restart.** At alpha=10 the impulsive-start
+  disturbance decays to a near-constant Cl~0.353 over t=8-12 before the real
+  instability re-emerges and saturates near t~22. A run stopped at t=10 reports
+  "steady, no shedding" and is wrong by 15%. `analysis/limit_cycle.py` guards against
+  this with a spectral-prominence test, and the driver's `T1_MIN` is the backstop.
+
+## Other agent configs
+
+A Gemini CLI config exists at `~/.gemini/settings.json`. To import user-level items
+(MCP servers, slash commands, subagents, skills, instructions), reply `/import` to scan
+and list what's importable, then `/import --yes=<digest>` to apply. If `/import` isn't
+available on this surface, run `claude import` from a terminal.

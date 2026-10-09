@@ -16,9 +16,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-CASE = ROOT / "unsteady_re2000" / "re2000_aoa9.5"
+CASE = ROOT / "NACA0012" / "unsteady_re2000" / "re2000_aoa9.5"
 OUT = ROOT / "analysis" / "figs" / "unsteady_re2000"
-CL_STEADY_9 = 0.246865      # last CONVERGED steady angle, steady_re2000/steady_aoa9
+CL_STEADY_9 = 0.246865      # last CONVERGED steady angle, NACA0012/steady_re2000/steady_aoa9
 COL, INK, MUTED = "#eda100", "#52514e", "#9a9893"   # Re=2000 slot
 
 

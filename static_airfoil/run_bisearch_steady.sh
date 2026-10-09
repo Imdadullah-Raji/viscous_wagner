@@ -1,6 +1,6 @@
 #!/bin/bash
 # run_bisearch_steady.sh <aoa> [<aoa> ...]
-# Steady (SIMPLE) base flows for the bifurcation search, into bi_point_search/.
+# Steady (SIMPLE) base flows for the bifurcation search, into NACA0012/bi_point_search/.
 # Sequential, 6 MPI ranks each -- six concurrent serial jobs measured 4.2x slower
 # per case (they each hold the whole mesh and saturate memory bandwidth).
 cd "$(dirname "$0")"
@@ -8,7 +8,7 @@ source /opt/openfoam-dev/etc/bashrc >/dev/null 2>&1
 MESH=meshes/M2_ns160_nr180_b025.msh
 NP=6; NITER=6000
 for A in "$@"; do
-  C=bi_point_search/steady_$A
+  C=NACA0012/bi_point_search/steady_$A
   if [ -d "$C/processor0" ]; then echo "$(date '+%H:%M:%S')  steady $A already built, skipping"; continue; fi
   ./make_steady.sh "$C" 500 "$A" "$MESH" $NITER > /dev/null 2>&1 || { echo "build FAILED $A"; continue; }
   ( cd "$C"

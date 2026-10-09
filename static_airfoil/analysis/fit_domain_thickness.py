@@ -30,7 +30,7 @@ from lasso_re1000 import collect, ROOT
 from legendre_odd_fit import ODD, fit, mirror, to_theta_monomial
 
 OUT = ROOT / "analysis" / "figs" / "naca0006_domain"
-SHAPES = {"NACA0006": "steady_naca0006_re500", "NACA0012": "steady_re500"}
+SHAPES = {"NACA0006": "NACA0006/steady_re500", "NACA0012": "NACA0012/steady_re500"}
 COLOR = {"NACA0006": "#1baf7a", "NACA0012": "#2a78d6"}
 TOL_ABS, TOL_A3, TOL_C5 = 1e-3, 0.05, 0.05
 BASE_WIN = 4

@@ -35,8 +35,8 @@ from matplotlib.path import Path as MPath
 ROOT = Path(__file__).resolve().parents[1]
 THESIS = ROOT.parent
 CASES = {"plate": THESIS / "plate_case" / "re500",
-         "NACA0006": ROOT / "steady_naca0006_re500",
-         "NACA0012": ROOT / "steady_re500"}
+         "NACA0006": ROOT / "NACA0006" / "steady_re500",
+         "NACA0012": ROOT / "NACA0012" / "steady_re500"}
 COLOR = {"plate": "#c2410c", "NACA0006": "#1baf7a", "NACA0012": "#2a78d6"}
 
 

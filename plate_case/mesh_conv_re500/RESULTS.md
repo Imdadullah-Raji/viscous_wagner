@@ -67,6 +67,6 @@ already converged.
 ## Files
 
 - Plate cases are in `steady_aoa{0,2,6,8}/`. NACA0006 cases are in
-  `static_airfoil/steady_naca0006_re500_fine/`.
+  `static_airfoil/NACA0006/steady_re500_fine/`.
 - The driver is `run_after_unsteady.sh` and the log is `run_steady.log`.
-- Base values are from `../re500/RESULTS.md` and `static_airfoil/steady_naca0006_re500/run_steady.log`.
+- Base values are from `../re500/RESULTS.md` and `static_airfoil/NACA0006/steady_re500/run_steady.log`.

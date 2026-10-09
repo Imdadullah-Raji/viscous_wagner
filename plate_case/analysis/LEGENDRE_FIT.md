@@ -35,7 +35,7 @@ alongside with the same code, the same angle grid and the same windows.
   the 7 in `lift_coeffs.csv`. Only angles marked `CONVERGED` in `RESULTS.md` are used; that is the
   plate sweep's range-and-drift gate. The script asserts that no unconverged angle falls inside a
   window. At Re = 1000, 8.5° and above are unconverged, so 0–8° is the widest window at both Re.
-- **NACA0012:** `static_airfoil/steady_re500/` and `steady_re1000/`, read through `collect()` with
+- **NACA0012:** `static_airfoil/NACA0012/steady_re500/` and `NACA0012/steady_re1000/`, read through `collect()` with
   its force-trace verdict.
 - **Grid:** 0.5°, so 9, 13 and 17 points on 0–4°, 0–6° and 0–8°, which become 17, 25 and 33 after
   mirroring. The condition number of the basis is 3.9, 2.9 and 2.7.

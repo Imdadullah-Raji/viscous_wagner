@@ -20,7 +20,7 @@ def design(degrees):
 
 model = LinearRegression().fit(design(angles), y)
 rows = []
-for case in (ROOT / 'steady_re500').glob('steady_aoa*'):
+for case in (ROOT / 'NACA0012' / 'steady_re500').glob('steady_aoa*'):
     if not case.is_dir():
         continue
     angle = float(case.name.removeprefix('steady_aoa'))

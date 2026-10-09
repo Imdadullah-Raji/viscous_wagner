@@ -30,8 +30,8 @@ set -e
 cd "$(dirname "$0")"
 source /opt/openfoam-dev/etc/bashrc >/dev/null 2>&1
 A=$1; SRC=$2; EPS=$3; TMAX=${4:-120.5}
-REFCASE=${REFCASE:-re500_aoa12}   # known-good TRANSIENT case to take fvSolution from
-NP=6; DT=0.0005572582892; CHUNK=20; D=bi_point_search
+REFCASE=${REFCASE:-NACA0012/re500_aoa12}   # known-good TRANSIENT case to take fvSolution from
+NP=6; DT=0.0005572582892; CHUNK=20; D=NACA0012/bi_point_search
 C=$D/marg_$A
 
 if [ ! -d "$C/processor0" ]; then

@@ -32,7 +32,7 @@ FIG = os.path.join(ROOT, "analysis", "figs", "onset_amplitude.png")
 def carrier_amplitude(aoa, t_conv):
     out = subprocess.run(
         [sys.executable, os.path.join(ROOT, "analysis", "growth_rate.py"),
-         os.path.join(ROOT, f"re500_aoa{aoa}"), "--tmin", str(t_conv)],
+         os.path.join(ROOT, "NACA0012", f"re500_aoa{aoa}"), "--tmin", str(t_conv)],
         capture_output=True, text=True).stdout
     d = dict(l.split("=", 1) for l in out.strip().splitlines() if "=" in l)
     return float(d["A_LAST"]), float(d["SIGMA"])

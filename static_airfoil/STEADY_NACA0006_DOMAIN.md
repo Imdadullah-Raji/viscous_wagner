@@ -75,10 +75,10 @@ range depends on section thickness. A NACA0006 steady sweep was run at Re = 500,
   `meshes/M2_ns160_nr180_b025.msh` byte for byte. The NACA0006 mesh is
   `meshes/M2_ns160_nr180_b025_naca0006_re500.msh`, built as
   `--naca 0006 --re 500 -r 30 --nr 180 --ns 160 --nte 32 --bump 0.25`.
-- **Cases:** `steady_naca0006_re500/steady_aoa{0..20}`, made by `make_steady.sh` (6000 iterations)
-  and run by `steady_naca0006_re500/sweep.sh`: sequential, 6 ranks, about 3.3 minutes per case.
-- **Data:** `collect(500, "steady_naca0006_re500")` (`collect()` now takes an optional folder).
-  The NACA0012 uses `steady_re500/`, keeping integer angles only (0–12°, then 14, 16, 18, 20°).
+- **Cases:** `NACA0006/steady_re500/steady_aoa{0..20}`, made by `make_steady.sh` (6000 iterations)
+  and run by `NACA0006/steady_re500/sweep.sh`: sequential, 6 ranks, about 3.3 minutes per case.
+- **Data:** `collect(500, "NACA0006/steady_re500")` (`collect()` now takes an optional folder).
+  The NACA0012 uses `NACA0012/steady_re500/`, keeping integer angles only (0–12°, then 14, 16, 18, 20°).
   A window uses only the converged angles running continuously from 0° and ends on a computed
   angle.
 - **Fits per window 0–A** (`analysis/fit_domain_thickness.py`):
@@ -95,7 +95,7 @@ range depends on section thickness. A NACA0006 steady sweep was run at Re = 500,
   - `windows_NACA0006.csv` and `windows_NACA0012.csv`;
   - `cl_NACA0006.csv` and `cl_NACA0012.csv`, with the 0–4° prediction and its error;
   - `extrapolation.png` and `window_scan.png`.
-- `steady_naca0006_re500/run_steady.log`, and a `*.build.log` per case.
+- `NACA0006/steady_re500/run_steady.log`, and a `*.build.log` per case.
 
 ## Reproduce
 
@@ -103,7 +103,7 @@ range depends on section thickness. A NACA0006 steady sweep was run at Re = 500,
 PY=/home/raji/miniconda3/envs/research/bin/python
 (cd meshing && $PY mesher.py ../meshes/M2_ns160_nr180_b025_naca0006_re500.msh \
     --naca 0006 --re 500 -r 30 --nr 180 --ns 160 --nte 32 --bump 0.25)
-steady_naca0006_re500/sweep.sh > steady_naca0006_re500/run_steady.log 2>&1
-python3 analysis/steady_summary.py --root steady_naca0006_re500
+NACA0006/steady_re500/sweep.sh > NACA0006/steady_re500/run_steady.log 2>&1
+python3 analysis/steady_summary.py --root NACA0006/steady_re500
 (cd analysis && $PY fit_domain_thickness.py)
 ```

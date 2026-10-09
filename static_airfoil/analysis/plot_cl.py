@@ -49,7 +49,7 @@ CASES = [("re500_aoa14", r"AoA $14^\circ$", 60.5, "#bcbd22"),
 
 
 def t_conv_of(case, fallback):
-    p = os.path.join(ROOT, case, ".phase2")
+    p = os.path.join(ROOT, "NACA0012", case, ".phase2")
     if os.path.exists(p):
         for line in open(p):
             if line.startswith("T_CONV="):
@@ -125,7 +125,7 @@ def main():
     os.makedirs(FIGS, exist_ok=True)
     data = {}
     for case, label, t_conv, colour in CASES:
-        t, cl, cd = load_series(os.path.join(ROOT, case))
+        t, cl, cd = load_series(os.path.join(ROOT, "NACA0012", case))
         t_conv = t_conv_of(case, t_conv)
         f0 = carrier_freq(t, cl, t_conv)
         data[case] = dict(t=t, cl=cl, cd=cd, f0=f0, label=label,
