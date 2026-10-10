@@ -73,3 +73,12 @@ Bottom line: Make a folder at `/home/raji/Research/repositories`, copy codes the
 - The Re scaling law of a3 for NACA0012, suggested by claude code mid-session.(claude opus 5.5) **It calculated the fit by itself, without prompting**
 
 - **UNTESTED**: I added one entry you didn't list: the explanation that the plate's a3 peak comes from its sharp leading edge: Claude Opus 5.5 in a claude code session. 
+
+
+## Non-code that goes into Git
+
+- Plots, figures that explain the results. 
+
+
+## Remote Repo
+`https://github.com/Imdadullah-Raji/viscous_wagner`
