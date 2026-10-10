@@ -70,6 +70,11 @@ plate_case/           thick flat plate: plate_mesher.py, run_sweep.py, run_batch
 `static_airfoil/CLAUDE.md` is the working reference: commands, the staging contract, why the angle
 is set by rotating the freestream, and which settings were measured rather than guessed.
 
+**Figures:** the plots the notes refer to are included. They cover lift, drag and L/D against angle,
+C_L histories and spectra, the eigenvalue onset, the LASSO and Legendre fits, the a3(Re) scaling, and
+the LSB streamlines and skin friction (`static_airfoil/lsb/figs/`). They live next to the notes, mostly
+in `static_airfoil/analysis/figs/`.
+
 **Not included:** fields, force histories, meshes (they regenerate from `mesher.py` and
 `plate_mesher.py`), logs and PDFs. These stay in the working tree at `/home/raji/Research/Thesis`.
 
@@ -103,8 +108,9 @@ control.
 **Authorship.** Every commit message ends with an "Authorship" list.
 - *Claude-generated:* written by Claude Code agents running Claude Opus 5.5. This covers most drivers, analysis scripts
   and notes.
-- *Codex-generated:* written by an OpenAI Codex session on 2026-10-05 (odd-cubic fits, literature
-  note, M1 mesh study, the saturating-fit experiment), plus the AoA 30 flow render.
+- *Codex-generated:* written by OpenAI Codex running GPT 6 Astra, in a session on 2026-10-05
+  (odd-cubic fits, literature note, M1 mesh study, the saturating-fit experiment), plus the AoA 30
+  flow render (2026-09-30).
 - *Written by the user:* the plans, the instructions and the first fitting scripts
   (`preshedding_slope.py`, `fit_quad.py`, `lasso_reg.py`, `extract_lift_coeffs.sh`).
 
