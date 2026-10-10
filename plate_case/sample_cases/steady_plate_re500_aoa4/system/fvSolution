@@ -1,0 +1,34 @@
+FoamFile { version 2.0; format ascii; class dictionary; object fvSolution; }
+solvers
+{
+    p     { solver GAMG; tolerance 1e-07; relTol 0.01; smoother GaussSeidel; }
+    pFinal{ $p; tolerance 1e-08; relTol 0; }
+    U     { solver smoothSolver; smoother symGaussSeidel; tolerance 1e-08; relTol 0.01; }
+    UFinal{ $U; tolerance 1e-09; relTol 0; }
+}
+PIMPLE
+{
+    // PISO (nOuterCorrectors 1) on purpose.  Measured on the 110k-cell mesh:
+    // outer2 = 0.416 s/step (159 GAMG it/step), outer1 = 0.176 s/step (53).
+    // At Co < 1 with backward ddt the outer loop buys no accuracy here, only
+    // 2.4x the cost.
+    momentumPredictor yes;
+    nOuterCorrectors 1;
+    nCorrectors      2;
+
+    // Keep this at 1.  The O-grid has max non-orthogonality ~64 deg at the wake
+    // block corners; setting it to 0 made the pressure solve converge WORSE and
+    // the step 3.7x slower (0.650 s/step), not faster.
+    nNonOrthogonalCorrectors 2;
+
+    pRefCell 0;
+    pRefValue 0;
+}
+
+// Under-relaxation is what makes SIMPLE converge; it has no effect on WHICH
+// fixed point is found, only on whether the iteration reaches it.
+relaxationFactors
+{
+    equations { U 0.7; }
+    fields    { p 0.3; }
+}

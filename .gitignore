@@ -1,0 +1,12 @@
+# Code and notes only. Simulation output stays in the workspace (/home/raji/Research/Thesis).
+*.msh
+processor*/
+postProcessing/
+constant/polyMesh/
+log.*
+*.log
+*.pdf
+__pycache__/
+.vscode/
+*.orig
+*.bak

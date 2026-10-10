@@ -1,0 +1,8 @@
+FoamFile { version 2.0; format ascii; class dictionary; object decomposeParDict; }
+
+// 6, not 12: this box is an i5-12400 with 6 PHYSICAL cores / 12 threads.
+// nproc reports hyperthreads and mpirun -np 8 fails with "not enough slots";
+// two concurrent 4-rank jobs oversubscribe and cost 1.7x per step.
+numberOfSubdomains  6;
+
+method  scotch;

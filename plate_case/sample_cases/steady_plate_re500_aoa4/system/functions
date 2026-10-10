@@ -1,0 +1,108 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+    Post-processing for the 2D NACA0012 at Re = 500, AoA = 4 deg.
+
+    Reference values follow from c = 1, U = 1, span = 0.1:
+        magUInf 1;  lRef 1;  Aref = c*span = 0.1;  rhoInf 1 (kinematic p).
+
+    STAGING CONTRACT -- read before changing a writeControl:
+      forceCoeffs is on 'timeStep'.  It appends to a single .dat and NEVER
+      creates a time directory, so per-step C_L/C_D through the transient is
+      free.  The other three are on 'writeTime', so they fire only when the
+      case writes fields.  That is what lets stage 1 run field-free purely by
+      setting controlDict's writeInterval == endTime -- this file is IDENTICAL
+      in both stages and must stay that way.
+\*---------------------------------------------------------------------------*/
+
+FoamFile { version 2.0; format ascii; class dictionary; object functions; }
+
+// Order matters: Cp and wallShearStress must exist before "surfaces" samples them.
+
+forceCoeffs
+{
+    type            forceCoeffs;
+    libs            ("libforces.so");
+
+    writeControl    timeStep;
+    writeInterval   1;
+    log             yes;
+
+    patches         (airfoil);
+
+    // Kinematic pressure, so rho is the placeholder name and rhoInf scales it
+    rho             rhoInf;
+    rhoInf          1;
+
+    magUInf         1;
+    lRef            1;      // c
+    Aref            0.1;    // c * span (span = 0.1) -- NOT 1.0
+
+    CofR            (0 0 0);
+    dragDir         (0.997564050 0.069756474 0);
+    liftDir         (-0.069756474 0.997564050 0);
+    pitchAxis       (0 0 1);
+}
+
+Cp
+{
+    type            pressure;
+    libs            ("libfieldFunctionObjects.so");
+
+    // writeTime, NOT timeStep. A field-writing FO creates a time directory for
+    // whatever time it fires on, so "timeStep" during a live foamRun mints a new
+    // dir every deltaT containing only this field and no U/p.
+    executeControl  writeTime;
+    writeControl    writeTime;
+
+    field           p;
+    result          Cp;
+
+    calcTotal       no;
+    calcCoeff       yes;
+
+    // All three are required lookups once calcCoeff is on.
+    // p here is kinematic, so it is scaled by rhoInf: Cp = (p - pInf)/(0.5*rhoInf*|UInf|^2)
+    pInf            0;
+    UInf            (0.997564050 0.069756474 0);
+    rhoInf          1;
+}
+
+wallShearStress
+{
+    type            wallShearStress;
+    libs            ("libfieldFunctionObjects.so");
+
+    executeControl  writeTime;
+    writeControl    writeTime;
+
+    // Keep this explicit. An explicit list bypasses the isA<wallPolyPatch> filter,
+    // so this still works if the mesh is regenerated (gmshToFoam resets every
+    // patch to type "patch", losing the "wall" type on airfoil).
+    patches         (airfoil);
+}
+
+surfaces
+{
+    type            surfaces;
+    libs            ("libsampling.so");
+
+    executeControl  writeTime;
+    writeControl    writeTime;
+
+    surfaceFormat   raw;
+    interpolationScheme cell;
+
+    fields          (Cp p wallShearStress U);
+
+    surfaces
+    {
+        airfoil
+        {
+            type        patch;
+            patches     (airfoil);
+
+            // Must be false. wallShearStress has a zero internal field and carries
+            // data only on the boundary, so interpolating would smear zeros in.
+            interpolate false;
+        }
+    }
+}
