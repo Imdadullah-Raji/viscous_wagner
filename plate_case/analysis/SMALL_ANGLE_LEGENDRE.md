@@ -5,6 +5,7 @@ window 0–A, for A = 1, 1.25, …, 6°, gets an odd Legendre fit. The data are 
 `re500/`, all converged. The question is whether the higher-order terms die out as A → 0 while
 the cubic survives.
 
+- Plate geometry: thickness **t/c = 0.023** (2.3 % of chord); stadium section, semicircular edges of radius 0.0115c, overall length c = 1.
 - Script: `legendre_small_angle.py`
 - Outputs: `legendre_small_angle/` (`small_angle.txt`, `small_angle_windows.csv`, `small_angle.png`)
 

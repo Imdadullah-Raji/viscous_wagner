@@ -6,8 +6,13 @@ programme asks what replaces it when viscosity dominates. It was prompted by S. 
 S. T. M. Dawson (2021), *Improved Approximation to the Wagner Function by Sparse Identification of
 Nonlinear Dynamics*.
 
-2D laminar CFD with OpenFOAM (Foundation), on a NACA0012, a NACA0006 and a thick flat plate,
-at Re = 100–2000.
+2D laminar CFD with OpenFOAM (Foundation), on three symmetric sections at Re = 100–2000:
+
+| body | thickness t/c | section |
+|---|---|---|
+| NACA0012 | 0.12 | NACA 4-digit, cut at 0.98 of its length (blunt trailing edge), rescaled to unit chord |
+| NACA0006 | 0.06 | NACA 4-digit, cut at 0.98 of its length (blunt trailing edge), rescaled to unit chord |
+| flat plate | **0.023** (2.3 % of chord) | stadium: flat sides with semicircular leading and trailing edges of radius 0.0115c, overall length c = 1 (after the Eldredge & Wang plate) |
 
 ## Where it stands: the steady baseline
 

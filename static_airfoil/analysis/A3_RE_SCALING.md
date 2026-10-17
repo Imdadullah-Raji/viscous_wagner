@@ -86,6 +86,7 @@ bubble comes in before 6°.
 
 | | plate (sharp LE) | NACA0006 | NACA0012 |
 |---|---|---|---|
+| thickness t/c | 0.023 (stadium, semicircular edges r = 0.0115c) | 0.06 | 0.12 |
 | a1 at Re 500 (rad⁻¹) | 4.82 | 4.24 | 3.27 |
 | a3 at Re 500 (rad⁻³) | −18.9 | −24.9 | −28.2 |
 | a1(Re) | Re^0.10 | Re^0.077 | nearly flat; shallow maximum near Re 450 |

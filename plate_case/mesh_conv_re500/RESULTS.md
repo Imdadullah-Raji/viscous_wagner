@@ -1,7 +1,8 @@
 # Mesh convergence, Re = 500: plate and NACA0006 (oct8_workflow.md)
 
 2026-10-08. Each section is run on a finer mesh at 0°, 2°, 6° and 8° with steady SIMPLE
-(`make_steady.sh`, 6000 iterations) and compared with the production mesh.
+(`make_steady.sh`, 6000 iterations) and compared with the production mesh. Both plate meshes use
+the same geometry, thickness t/c = 0.023.
 
 ## Meshes
 

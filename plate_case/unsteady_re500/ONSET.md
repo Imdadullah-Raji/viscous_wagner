@@ -1,7 +1,7 @@
 # Plate shedding onset, Re = 500 (oct8_workflow.md)
 
 2026-10-08/09. Unsteady runs with `static_airfoil/run_staged.sh`, `NO_FIELDS=1` (forces only,
-no snapshots). Mesh `../re500/meshes/plate_ns160_nr180.msh` (63,360 cells), started
+no snapshots). Plate thickness t/c = 0.023. Mesh `../re500/meshes/plate_ns160_nr180.msh` (63,360 cells), started
 impulsively from uniform flow. Each run was stopped by hand once its state was clear: the
 driver was killed first, then `mpirun`. Each log ends with a `MANUAL STOP` note.
 

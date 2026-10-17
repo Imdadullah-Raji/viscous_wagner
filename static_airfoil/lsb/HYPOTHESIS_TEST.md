@@ -1,7 +1,7 @@
 # LSB hypothesis test: plate, Re = 500 (steady)
 
 2026-10-09. This note answers the Test section of `instructions/lsb_hypothesis.md` for the thick
-flat plate. The script is `hypothesis_test.py`, and its outputs are in `figs/hypothesis/`.
+flat plate (t/c = 0.023). The script is `hypothesis_test.py`, and its outputs are in `figs/hypothesis/`.
 
 > ## ⚠ How "trailing-edge separation" (α_TE) is defined here
 >
@@ -46,6 +46,7 @@ flat plate. The script is `hypothesis_test.py`, and its outputs are in `figs/hyp
 
 ## Data
 
+- **Plate geometry:** thickness t/c = 0.023 (2.3 % of chord). The section is a stadium: a flat plate with semicircular leading and trailing edges of radius 0.0115c, overall length c = 1. (`plate_mesher.py --th 0.023`, the default, after the Eldredge & Wang plate in `plate_v2.geo`.)
 - **Lift curve:**
   - Production mesh (`plate_case/re500`, 63k cells), every 0.25° from 0° to 12°, 49 angles.
   - All 49 meet the sweep's force-trace convergence test (`plate_case/re500/RESULTS.md`).

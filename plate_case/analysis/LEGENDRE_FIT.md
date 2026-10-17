@@ -1,5 +1,7 @@
 # Odd-Legendre fit of the plate lift curve, Re = 500 and 1000
 
+Plate thickness **t/c = 0.023** (2.3 % of chord; stadium section, semicircular edges of radius 0.0115c).
+
 Script: `analysis/legendre_plate.py` (research env). Outputs: `analysis/legendre/`.
 Method identical to `static_airfoil/analysis/legendre_odd_fit.py`, and the NACA0012 is refitted
 alongside with the same code, the same angle grid and the same windows.

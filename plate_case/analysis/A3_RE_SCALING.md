@@ -4,6 +4,7 @@
 "a3 having a (local) scaling law with Re". It repeats the Re = 500 small-angle analysis
 (`SMALL_ANGLE_LEGENDRE.md`) at every Re, with the same windows and fits.
 
+- Plate geometry: thickness **t/c = 0.023** (2.3 % of chord); stadium section, semicircular edges of radius 0.0115c, overall length c = 1.
 - Data: `re{200..900}/`, 0–6° at 0.25°. All 200 cases are converged on the force trace.
 - Script: `a3_re_scaling.py`
 - Outputs: `a3_re_scaling/` (`a3_vs_re.txt`, `a3_vs_re.csv`, `a3_vs_re.png`)

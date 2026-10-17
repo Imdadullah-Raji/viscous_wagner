@@ -1,5 +1,7 @@
 # Upper-surface separation: plate, NACA0006, NACA0012 at Re = 500
 
+Thicknesses: plate t/c = 0.023 (stadium section, semicircular edges), NACA0006 0.06, NACA0012 0.12.
+
 These are steady (SIMPLE) solutions at each case's latest iteration. The script is
 `streamlines_lsb.py`; run it with the research env and one or more `--aoa` values. Figures go to
 `figs/aoa<A>/`:
