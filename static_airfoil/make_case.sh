@@ -268,6 +268,16 @@ source /opt/openfoam-dev/etc/bashrc >/dev/null 2>&1
 gmshToFoam $MSH -case $CASE > $CASE/log.gmshToFoam 2>&1
 grep -qi "^End" $CASE/log.gmshToFoam || { echo "gmshToFoam FAILED"; tail -20 $CASE/log.gmshToFoam; exit 1; }
 
+# Opt-in, for meshes whose wall is an INTERNAL surface (zero-thickness plate,
+# zero_thickness_plate/ztp_mesher.py): BAFFLES=<createBafflesDict> splits the
+# faceZone gmshToFoam wrote into two wall patches in group "airfoil", which every
+# "airfoil" entry below (BCs, forces, Cp, wallShearStress, surfaces) matches.
+if [ -n "${BAFFLES:-}" ]; then
+  cp "$BAFFLES" $CASE/system/createBafflesDict
+  createBaffles -case $CASE -overwrite > $CASE/log.createBaffles 2>&1
+  grep -qi "^End" $CASE/log.createBaffles || { echo "createBaffles FAILED"; tail -20 $CASE/log.createBaffles; exit 1; }
+fi
+
 # gmshToFoam writes every patch as plain "patch".  frontAndBack MUST become
 # empty or the run is 3D with one cell in z, and airfoil should be wall so
 # wall-distance and wallShearStress behave.
@@ -280,10 +290,13 @@ def settype(name, t):
     assert s2 != s or ('type            %s;' % t) in s, "patch %s not retyped" % name
     s = s2
 settype('frontAndBack', 'empty')
-settype('airfoil', 'wall')
+import os
+baffled = bool(os.environ.get('BAFFLES'))
+if not baffled:      # baffle patches are created as walls by createBaffles
+    settype('airfoil', 'wall')
 settype('farfield', 'patch')
 open(p,'w').write(s)
-print("  boundary: frontAndBack->empty, airfoil->wall")
+print("  boundary: frontAndBack->empty, " + ("baffles (group airfoil) are walls" if baffled else "airfoil->wall"))
 PY
 
 checkMesh -case $CASE > $CASE/log.checkMesh 2>&1 || true

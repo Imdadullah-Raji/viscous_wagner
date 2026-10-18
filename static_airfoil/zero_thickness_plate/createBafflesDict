@@ -1,0 +1,47 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      createBafflesDict;
+}
+// Zero-thickness plate: split faceZone "plate" (written by gmshToFoam from the
+// physical group "plate" in ztp_mesher.py) into two wall patches, one per side.
+// Both are in group "airfoil", so make_case.sh's  patches (airfoil);  in the
+// force/Cp/wallShearStress functions and its "airfoil" boundaryField entries
+// apply to both sides.  Fields are not touched here: make_case.sh writes 0/
+// with an "airfoil" entry, which matches the group.
+
+internalFacesOnly true;
+
+fields false;
+
+baffles
+{
+    plate
+    {
+        type        faceZone;
+        zoneName    plate;
+
+        owner
+        {
+            name        plate_upper;
+            type        wall;
+            inGroups    (airfoil);
+        }
+        neighbour
+        {
+            name        plate_lower;
+            $owner;
+        }
+    }
+}
+
+// ************************************************************************* //
