@@ -63,3 +63,19 @@ of the plate, and peaks along the diagonal spokes.
   incidence α. At Re 500 they span about 2e-3 down to 4e-4 c over 0–6°.
 - The sweep uses T3 (tip 5.6e-4c).
 
+## Elliptic-coordinate mesher (added by Claude, 2026-10-19)
+
+`ell_mesher.py` is the mesher to use. It builds confocal ellipses and hyperbolas with foci at the
+tips, the conformal map z = c/2 + (c/2)·cosh(μ + iν). It is orthogonal everywhere (max
+non-orthogonality about 5°) and clusters at the tips by itself.
+
+- Usage:
+  ```bash
+  python3 ell_mesher.py out.msh --re 500 --nnu 800 --nmu 210
+  BAFFLES=$PWD/createBafflesDict ../make_steady.sh <case> 500 <AoA> out.msh 6000
+  ```
+- The plate is still an internal surface, so the baffle workflow is unchanged.
+- Only the four cells touching the tips are skewed: each has a 180° corner where the map doubles
+  angles. Their skewness falls with nν, and nν = 800 passes `checkMesh`.
+- The H-type `ztp_mesher.py` above is superseded. Its tip distortion produced a spurious
+  non-cubic lift curve (see `A3_RE500.md`).
