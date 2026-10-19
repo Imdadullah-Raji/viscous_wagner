@@ -1,0 +1,373 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{placeins}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage[colorlinks=true,linkcolor=MidnightBlue,urlcolor=MidnightBlue]{hyperref}
+
+\graphicspath{{../../analysis/cubic_stress_test/}{../../zero_thickness_plate/a3_re500_ell/}{../../zero_thickness_plate/figs/}}
+\setlist{itemsep=2pt,topsep=4pt}
+\newcommand{\CL}{C_L}
+\newcommand{\CD}{C_D}
+\newtcolorbox{keybox}[1]{breakable,colback=MidnightBlue!5,colframe=MidnightBlue,boxrule=0.8pt,arc=2pt,
+  left=6pt,right=6pt,top=4pt,bottom=4pt,title={\bfseries #1},coltitle=white,colbacktitle=MidnightBlue}
+\newtcolorbox{warnbox}[1]{breakable,colback=Goldenrod!12,colframe=BrickRed,boxrule=0.8pt,arc=2pt,
+  left=6pt,right=6pt,top=4pt,bottom=4pt,title={\bfseries #1},coltitle=white,colbacktitle=BrickRed}
+
+\title{The steady small-angle lift baseline for the viscous Wagner problem\\[2pt]
+\large Four bodies at ultra-low Reynolds number: what is established, how robustly, and where the data stop}
+\author{Status report}
+\date{19 October 2026}
+
+\begin{document}
+\maketitle
+
+% =====================================================================================
+\section*{Summary}
+
+A step response is measured against the steady state it settles to, so the first task of the
+programme is the steady lift curve at small angles. Steady (SIMPLE) 2D laminar solutions were
+computed, with the angle set by rotating the freestream on one mesh per body and Reynolds number.
+The four bodies are NACA0012, NACA0006, a $2.3\%$-thick stadium plate, and a zero-thickness plate.
+The method fits odd Legendre polynomials on windows $0$--$A$ and converts them to
+$\CL = a_1\theta + a_3\theta^3 + a_5\theta^5 + \dots$
+
+\begin{keybox}{Findings}
+\begin{enumerate}[leftmargin=*]
+\item \textbf{The lift is analytic at the origin with a finite, nonzero cubic term, for all four
+  bodies.} The deficit $d = a_1\theta - \CL$ goes as $\theta^3$: its local exponent is $3.01$--$3.10$ over
+  $1$--$4^\circ$ and tends to $3$. There is no non-analytic term.
+\item \textbf{$a_3$ is robust:} fixed to $0.1\%$ by the fits, independent of window and fit order. For
+  the zero-thickness plate it is fixed to about $1\%$ including mesh error.\\
+  At Re $=500$: $a_3=-28.2$ (NACA0012), $-24.9$ (NACA0006), $-18.9$ (plate, $t/c=0.023$) and $-12.8$
+  (zero-thickness plate). $|a_3|$ grows steadily with thickness and $a_1$ falls ($3.27$, $4.24$, $4.82$,
+  $4.94$).
+\item \textbf{$a_3$ against Re.}
+  \begin{itemize}[leftmargin=*]
+  \item The two airfoils: $|a_3|$ grows with Re.
+  \item The thick plate: $|a_3|$ peaks near Re $400$--$450$, then falls.
+  \item The zero-thickness plate: $|a_3|$ is flat at about $14.6$ for Re $200$--$300$, then falls almost linearly to
+    $8.3$ by Re $900$. Its maximum is at Re $\le 300$, below the thick plate's.
+  \end{itemize}
+  $a_1$ rises with Re for all but NACA0012.
+\item \textbf{What ``cubic at the origin'' means.} By itself it is not a claim of cubic dominance:
+  every analytic odd curve looks cubic close enough to the origin. The substantive statement is the
+  \emph{range} of the truncation.
+  \begin{itemize}[leftmargin=*]
+  \item A cubic fitted on $0$--$4^\circ$ stays within $10^{-3}$ of the data to $5$--$5.5^\circ$ for the three
+    thin bodies and to $8.5^\circ$ for NACA0012.
+  \item Adding $a_5$ extends this for the thin bodies, by up to $3.5^\circ$ (NACA0006, to $9^\circ$).
+  \end{itemize}
+\item \textbf{The range shrinks as the body thins and, for the zero-thickness plate, as Re rises.} The
+  two-term radius estimate $\sqrt{|a_3/a_5|}$ is about $33^\circ$, $16^\circ$, $12^\circ$ and $10.5^\circ$
+  at Re 500 (NACA0012 to zero-thickness plate). For the zero-thickness plate it falls from $18^\circ$ at
+  Re $200$ to $6$--$7.5^\circ$ at Re $900$, roughly as $\mathrm{Re}^{-0.63}$.
+\item \textbf{The data fix $a_1$, $a_3$, $a_5$ for every body, and $a_7$ for NACA0012 only.} The
+  limit is the angular range and the content beyond the fit order, not noise (residual
+  $\sim 10^{-7}$).
+\end{enumerate}
+\end{keybox}
+
+\begin{warnbox}{Withdrawn: the zero-thickness plate's $\theta^{3.4}$}
+The first zero-thickness plate sweep, on an H-type grid, gave a deficit growing as $\theta^{3.4}$ and
+no definable $a_3$. That was a mesh artefact.
+\begin{itemize}[leftmargin=*]
+\item The H-grid's wedges at the tips reach $73$--$76^\circ$ non-orthogonality.
+\item On an orthogonal elliptic-coordinate grid (maximum $4.5^\circ$), the same plate is cleanly cubic.
+\end{itemize}
+\end{warnbox}
+
+\noindent\textbf{Open questions.}
+\begin{itemize}[leftmargin=*]
+\item What singularity of $\CL(\alpha)$ in the complex plane limits the cubic range. Candidates are
+  discussed in Section~\ref{sec:sing}; the shedding Hopf is excluded.
+\item Whether the shrinking range is tied to leading-edge bubble formation.
+\item $a_5$ for the zero-thickness plate at Re $800$--$900$, which the $0$--$6^\circ$ data cannot fix.
+\end{itemize}
+
+\newpage
+% =====================================================================================
+\section{Setup}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Solver.} OpenFOAM (Foundation) \texttt{foamRun}, incompressible, steady SIMPLE.
+  \begin{itemize}
+  \item Same schemes as the transient campaign; 6000--12000 iterations.
+  \item Convergence is judged on the force trace: the last-$10\%$ range of $\CL$ is at most a few
+    $\times 10^{-6}$ for every case used.
+  \item Warm starts from a converged neighbouring angle give identical $\CL$ and $\CD$ (checked at
+    $0.5^\circ$).
+  \end{itemize}
+\item \textbf{Bodies and meshes.} One mesh per body and Re; the first cell is
+  $h_1 = 0.05/\sqrt{\mathrm{Re}}$.
+  \begin{itemize}
+  \item \emph{NACA0012, NACA0006:} an O-ring, cut at $0.98c$ (blunt trailing edge).
+  \item \emph{Plate, $t/c=0.023$:} a stadium section with semicircular edges of radius $0.0115c$, on a
+    two-ring O-grid.
+  \item \emph{Zero-thickness plate:} confocal elliptic coordinates,
+    $z = c/2 + (c/2)\cosh(\mu + i\nu)$, so the plate is $\mu=0$, with $n_\nu = 800\sqrt{\mathrm{Re}/500}$.
+    The plate is an internal surface, split into two walls by \texttt{createBaffles}.
+  \end{itemize}
+\item \textbf{Angles.}
+  \begin{itemize}
+  \item $0$--$6^\circ$ every $0.25^\circ$ at Re 500. The airfoils add integer angles to $20^\circ$, the
+    plate $0.25^\circ$ steps to $12^\circ$.
+  \item $0.5^\circ$ steps in the Re sweeps. At Re 500 the $0.5^\circ$ subset reproduces $a_3$ to
+    $0.05\%$.
+  \end{itemize}
+\item \textbf{Machines.} OpenFOAM-dev (main machine), 13 and v14 (remote machines). Versions agree to
+  about $4\times 10^{-7}$ in $\CL$; identical to six digits on the zero-thickness plate.
+\end{itemize}
+
+% =====================================================================================
+\section{Is the lift cubic at the origin? The deficit test}
+
+For $\CL = a_1\theta + a_3\theta^3 + \dots$ the deficit $d = a_1\theta - \CL \to -a_3\theta^3$, so
+$d/\theta^3$ tends to a constant and the local exponent $\mathrm{d}\ln d/\mathrm{d}\ln\theta$ tends to $3$.
+Here $a_1$ is the Richardson limit of $\CL/\theta$ from $0.25^\circ$ and $0.5^\circ$. A non-analytic term
+such as $\theta^{3+\epsilon}$ or $\theta^3\ln\theta$ would fail this.
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=\linewidth]{deficit_four_bodies.png}
+\caption{Re $=500$. Left: $d/\theta^3$. Centre: the deficit, log--log. Right: its local exponent.
+Yellow is the H-type grid of the zero-thickness plate, superseded.}
+\end{figure}
+
+\begin{center}\small
+\begin{tabular}{lrrrrrrr}
+\toprule
+body & $a_1$ & exponent, $1$--$4^\circ$ & \multicolumn{5}{c}{$d/\theta^3$ at $0.5,\ 1,\ 2,\ 4,\ 6^\circ$}\\
+\midrule
+NACA0012 & 3.271 & 3.01 & 27.3 & 27.9 & 28.2 & 28.5 & 28.6\\
+NACA0006 & 4.240 & 3.05 & 23.8 & 24.6 & 25.1 & 26.4 & 28.5\\
+plate $t/c=0.023$ & 4.825 & 3.09 & 17.7 & 18.6 & 19.3 & 21.3 & 25.4\\
+zero-thickness plate & 4.935 & 3.10 & 12.9 & 12.9 & 13.3 & 14.9 & 18.5\\
+\midrule
+\textcolor{gray}{zero-thickness, H-grid} & \textcolor{gray}{4.908} & \textcolor{gray}{3.42} &
+\textcolor{gray}{4.5} & \textcolor{gray}{7.0} & \textcolor{gray}{10.5} & \textcolor{gray}{13.0} & \textcolor{gray}{16.9}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All four bodies pass. The H-grid zero-thickness plate failed, with $d/\theta^3$ never levelling off.
+It was the only case that would have indicated a non-analytic term, and it was a mesh artefact
+(Section~\ref{sec:mesh}).
+
+% =====================================================================================
+\section{The zero-thickness plate: mesh}\label{sec:mesh}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=\linewidth]{mesh_comparison.png}
+\caption{Top: the H-type grid (T3), the topology of the original \texttt{.geo}. Bottom: the elliptic
+grid (E800). Columns: near field; the $0.04c$ around the leading-edge tip; cell non-orthogonality.}
+\end{figure}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{H-type grid.} The wedges upstream and downstream of the plate map a short vertical block
+  edge onto a $45^\circ$ far-field arc.
+  \begin{itemize}
+  \item Non-orthogonality reaches $54^\circ$ within $0.02c$ of a tip, and $73.6^\circ$ (T3) or $76.2^\circ$ (T4)
+    overall.
+  \item Moving the far-field centre or making the far-field spacing uniform does not help.
+  \item Tip refinement at $6^\circ$ did not converge monotonically in $\CL$.
+  \end{itemize}
+\item \textbf{Elliptic grid.}
+  \begin{itemize}
+  \item Orthogonal by construction: maximum non-orthogonality $4.5^\circ$, mostly from the span
+    direction.
+  \item Clusters at the tips by itself: tip cell $1.5\times10^{-5}c$ at Re 500.
+  \item Only the four cells touching the tips are imperfect: each has a $180^\circ$ corner, where the map
+    doubles angles.
+  \end{itemize}
+\item \textbf{Mesh sensitivity of $a_3$.} 1--$6^\circ$ were rerun on E560 (coarser in $\nu$).
+  \begin{itemize}
+  \item $\Delta\CL(\mathrm{E800}-\mathrm{E560}) = +0.0026\,\theta - 0.083\,\theta^3$, residual
+    $8\times10^{-7}$: mostly a slope change.
+  \item $a_3$ changes from $-12.71$ to $-12.79$ ($0.65\%$).
+  \item Extrapolated, $a_3 \approx -12.8$ to $-13.0$: about $1\%$ mesh uncertainty.
+  \end{itemize}
+\end{itemize}
+
+% =====================================================================================
+\section{Robustness of $a_3$, and what $a_5$ adds}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=\linewidth]{coefficients_vs_window.png}
+\caption{Re $=500$, P1--P7 fits on $0$--$A$ with least-squares error bars: $a_3$ (left), $a_5$ (centre),
+and $\sqrt{|a_3/a_5|}$ (right).}
+\end{figure}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{$a_3$ is window- and order-independent within each body's validity range}, to $0.1\%$:
+  \begin{itemize}
+  \item NACA0012: $-28.22\pm0.01$ on $3$--$8^\circ$;
+  \item NACA0006: $-24.8$ to $6^\circ$;
+  \item plate: $-18.9$ to $6^\circ$;
+  \item zero-thickness plate: $-12.79\pm0.02$ with P1--P9.
+  \end{itemize}
+\item \textbf{$a_5$ is measurable and has the sign of $a_3$ for all four bodies:} $-72$ (NACA0012),
+  about $-310$ (NACA0006), $-420$ (plate) and $-380$ (zero-thickness plate).
+\item \textbf{Beyond the validity range, every coefficient becomes window-dependent:} from about
+  $10^\circ$ for NACA0012 and $8^\circ$ for NACA0006 and the plate. For the plate, that is the
+  leading-edge bubble range: formation at $7.9^\circ$ and reattachment reaching the trailing edge at
+  $8.4^\circ$, at Re 500.
+\end{itemize}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=\linewidth]{extrapolation.png}
+\caption{Truncations fitted on $0$--$4^\circ$ (grey band), extrapolated. Horizontal line: $10^{-3}$.}
+\end{figure}
+
+\begin{center}\small
+\begin{tabular}{lccc}
+\toprule
+first miss $>10^{-3}$ & $a_1\theta+a_3\theta^3$ & $+a_5\theta^5$ & $+a_7\theta^7$\\
+\midrule
+NACA0012 & $8.5^\circ$ & $7.5^\circ$ & $10.5^\circ$\\
+NACA0006 & $5.5^\circ$ & $9^\circ$ & $8^\circ$\\
+plate $t/c=0.023$ & $5^\circ$ & $6.25^\circ$ & $8.5^\circ$\\
+zero-thickness plate & $5.25^\circ$ & $>6^\circ$ (end of data) & $>6^\circ$ (end of data)\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{How much $a_5$ helps.}
+\begin{itemize}[leftmargin=*]
+\item It extends the truncation for the three thin bodies, by $1.25$--$3.5^\circ$. For NACA0012 it does
+  not, because its $a_5$ is small and comparable to the $\theta^7$ term.
+\item $a_7$ helps NACA0012 and the plate.
+\item No truncation holds beyond about $8$--$10.5^\circ$.
+\end{itemize}
+
+% =====================================================================================
+\section{Resolution: what the data can fix}
+
+\textbf{Noise floor.}
+\begin{itemize}[leftmargin=*]
+\item Converged $\CL$ is repeatable to about $10^{-8}$.
+\item The fit residual rms is $6\times10^{-8}$--$3\times10^{-7}$ to $6^\circ$, the effective noise.
+\item Cross-version differences are $4\times10^{-7}$.
+\item Mesh error is about $10^{-4}$ but smooth in $\alpha$, and mostly a slope change.
+\end{itemize}
+
+\textbf{Test.} For each coefficient, compare its spread between windows $4$--$6^\circ$ with its
+least-squares standard error. A ratio near $1$ means the coefficient is limited by noise and resolved.
+A ratio much larger than $1$ means content beyond the fit order leaks into it.
+
+\begin{center}\small
+\begin{tabular}{llcccc}
+\toprule
+body & fit & $a_3$ & $a_5$ & $a_7$ & $a_9$\\
+\midrule
+NACA0012 & P1--P7 & 0.65 & 0.97 & 1.5 & --\\
+NACA0006 & P1--P9 & 1.5 & 2.7 & 4.7 & 7.5\\
+plate $t/c=0.023$ & P1--P9 & 1.6 & 2.7 & 4.1 & 5.9\\
+zero-thickness plate & P1--P9 & 1.4 & 2.4 & 2.8 & 7.0\\
+zero-thickness plate & P1--P7 & 17 & 20 & 16 & --\\
+\bottomrule
+\end{tabular}\\[2pt]
+spread between windows / standard error
+\end{center}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Resolved:} $a_1$, $a_3$ and $a_5$ for every body, and $a_7 = +3500\pm200$ for NACA0012.
+\item \textbf{Not resolved:} $a_7$ for the three thinner bodies, and $a_9$ for any body.
+\item \textbf{The zero-thickness plate needs P1--P9 even on $0$--$6^\circ$:} with P1--P7 its coefficients
+  drift by $17$--$20$ standard errors. It has more high-order content, consistent with its smaller
+  radius.
+\item \textbf{The limit is range and truncation, not noise.} The data end at $6^\circ$ (zero-thickness
+  plate), $12^\circ$ (plate) and $20^\circ$ (airfoils). A proper ratio test or Padé analysis needs at
+  least four reliable coefficients. These data give two or three.
+\end{itemize}
+
+% =====================================================================================
+\section{Radius of convergence and the singularity question}\label{sec:sing}
+
+The range of any truncation is bounded by the radius of convergence $R$ of the series: the distance
+to the nearest singularity of $\CL(\alpha)$ in the complex plane. The two-term estimate
+$\sqrt{|a_3/a_5|}$ is crude, but it orders the bodies consistently with the extrapolation ranges:
+about $33^\circ$ (NACA0012), $16^\circ$ (NACA0006), $12^\circ$ (plate) and $10.5^\circ$
+(zero-thickness plate).
+
+\begin{center}\small
+\begin{tabular}{rcccccccc}
+\toprule
+\multicolumn{9}{c}{zero-thickness plate, elliptic grid, P1--P9 on $0$--$6^\circ$}\\
+Re & 200 & 300 & 400 & 500 & 600 & 700 & 800 & 900\\
+\midrule
+$a_1$ & 4.531 & 4.717 & 4.842 & 4.935 & 5.007 & 5.066 & 5.115 & 5.156\\
+$a_3$ & $-14.63$ & $-14.61$ & $-13.85$ & $-12.79$ & $-11.67$ & $-10.52$ & $-9.38$ & $-8.30$\\
+$a_5$ & $-143$ & $-247$ & $-317$ & $-380$ & $-418$ & $-482$ & $-452$/$-569$ & $-485$/$-805$\\
+$\sqrt{|a_3/a_5|}$ & $18.3^\circ$ & $13.9^\circ$ & $12.0^\circ$ & $10.5^\circ$ & $9.6^\circ$ & $8.5^\circ$ & $7.4$--$8.2^\circ$ & $5.8$--$7.5^\circ$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+At Re $800$ and $900$, $a_5$ depends on the fit window (the two entries are windows $0$--$5^\circ$ and
+$0$--$6^\circ$; at Re 900, $-485\pm28$ against $-805\pm68$). A radius of $6$--$8^\circ$ predicts this: the
+$6^\circ$ window reaches the radius itself. $a_3$ is unaffected, since its windows end at $4^\circ$. Re $800$
+and $900$ at $4$--$6^\circ$ were run to $12000$ iterations, which moved $a_3$ by $0.2$--$0.3\,\%$.
+
+The zero-thickness plate's range shrinks roughly as $\mathrm{Re}^{-0.63}$, as if a singularity moved
+toward $\alpha=0$ as Re rises. The thick plate's leading-edge bubble moves the same way: formation at
+$7.9^\circ$ at Re 500, $5.75^\circ$ at Re 900.
+
+\textbf{Candidates for the singularity:}
+\begin{itemize}[leftmargin=*]
+\item \textbf{Hopf bifurcation (shedding onset): excluded.} The steady branch continues analytically
+  through it as an unstable solution, and SIMPLE computes it beyond onset (NACA0012:
+  $\alpha_c=11.46^\circ$ at Re 500).
+\item \textbf{Fold (saddle-node) of the steady branch: a genuine singularity.} It gives
+  $\CL\sim\sqrt{\alpha_s-\alpha}$ on the real axis, with coefficients of one sign; $a_3$ and $a_5$ do share
+  a sign. But NACA0006 has converged steady solutions to $20^\circ$, beyond its estimate of about
+  $16^\circ$, so its nearest singularity is probably complex.
+\item \textbf{Leading-edge bubble formation: not a singularity in itself.} The steady solution is
+  analytic in $\alpha$ wherever the linearised problem is invertible. A sharp but smooth transition does,
+  however, come with complex singularities near the real axis. A complex pair approaching the axis near
+  the bubble angle would explain both the $8$--$10^\circ$ truncation failures and the shrinking $R$.
+  \emph{This is a hypothesis.}
+\end{itemize}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=0.95\linewidth]{a3_a1_vs_re_four_bodies.png}
+\caption{$|a_3|$ and $a_1$ against Re. The zero-thickness plate covers Re 200--900.}
+\end{figure}
+
+% =====================================================================================
+\section{What is established, what is not, and next steps}
+
+\textbf{Established:}
+\begin{itemize}[leftmargin=*]
+\item The steady lift of all four bodies is analytic at the origin, with a finite, nonzero, robust
+  $a_3$. There is no non-analytic term.
+\item $a_5$ is measured for all four bodies, and $a_7$ for NACA0012.
+\item The cubic range and the two-term radius shrink with thinness, and, for the zero-thickness plate,
+  with Re.
+\item $a_3(\mathrm{Re})$ is monotonic for the airfoils. It has a maximum for both plates: near Re
+  $400$--$450$ for the thick plate, and at Re $\le300$ for the zero-thickness plate.
+\end{itemize}
+
+\textbf{Not established:}
+\begin{itemize}[leftmargin=*]
+\item The location and type of the singularity limiting $R$.
+\item Any link to bubble formation.
+\item $a_7$ and beyond for the thin bodies.
+\end{itemize}
+
+\textbf{Next:}
+\begin{enumerate}[leftmargin=*]
+\item Padé approximants in $\theta^2$, to locate complex singularities from the coefficients available.
+\item Extend the zero-thickness plate to $12^\circ$ at Re 500, to fix $a_5$ and $a_7$.
+\item Extend the zero-thickness plate beyond $6^\circ$ (or refine to $0.25^\circ$) at Re $800$--$900$, to
+  resolve $a_5$ where the radius is smallest.
+\end{enumerate}
+
+\end{document}
