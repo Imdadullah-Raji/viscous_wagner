@@ -1,0 +1,73 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    object      fvSolution.tight;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Tight variant (2026-10-19): tolerance 1e-12 on every solve, so each SIMPLE step solves to relTol.
+// The production 1e-7/1e-8 tolerances stalled p and U (0 iterations) once residuals reached ~8e-8;
+// 1e-14 drove the third p solve of each step into the 1000-iteration cap.
+
+solvers
+{
+    p
+    {
+        solver          GAMG;
+        tolerance       1e-12;
+        relTol          0.01;
+        smoother        GaussSeidel;
+    }
+    pFinal
+    {
+        $p              ;
+        tolerance       1e-12;
+        relTol          0.01;
+    }
+    U
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-12;
+        relTol          0.01;
+    }
+    UFinal
+    {
+        $U              ;
+        tolerance       1e-12;
+        relTol          0.01;
+    }
+}
+
+PIMPLE
+{
+    momentumPredictor yes;
+    nOuterCorrectors 1;
+    nCorrectors     2;
+    nNonOrthogonalCorrectors 2;
+    pRefCell        0;
+    pRefValue       0;
+}
+
+relaxationFactors
+{
+    equations
+    {
+        U               0.7;
+    }
+    fields
+    {
+        p               0.3;
+    }
+}
+
+
+// ************************************************************************* //

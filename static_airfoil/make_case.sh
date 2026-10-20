@@ -1,4 +1,5 @@
 #!/bin/bash
+# Repo copy: host names, logins and paths replaced by $HOST_B, $REMOTE_B_DIR, $CFD_USER (set them to run).
 # make_case.sh <caseDir> <Re> <AoA_deg> <mesh.msh>
 #
 # Builds a complete static-airfoil case.  AoA is imposed by ROTATING THE
@@ -264,7 +265,8 @@ surfaces
 EOF
 
 # ------------------------------------------------------------------ mesh ---
-source /opt/openfoam-dev/etc/bashrc >/dev/null 2>&1
+# openfoam-dev was removed 2026-10-19; v14 (build 14-a4867fc914c1, same as machineB) replaces it.
+source ${FOAM_BASHRC:-/opt/openfoam14/etc/bashrc} >/dev/null 2>&1
 gmshToFoam $MSH -case $CASE > $CASE/log.gmshToFoam 2>&1
 grep -qi "^End" $CASE/log.gmshToFoam || { echo "gmshToFoam FAILED"; tail -20 $CASE/log.gmshToFoam; exit 1; }
 
