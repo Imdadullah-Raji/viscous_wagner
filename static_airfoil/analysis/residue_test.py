@@ -255,15 +255,15 @@ def main():
         fig, ax = plt.subplots(figsize=(9, 3.8))
         x = np.arange(len(real))
         ax.errorbar(x, rat, yerr=[rat - np.array([r["lo"] for r in real]), np.array([r["hi"] for r in real]) - rat],
-                    fmt="o", color="#2a78d6", ms=7, mec="white", mew=1.5, capsize=3, label="r_D / r_L (16–84 % noise range)")
+                    fmt="o", color="#2a78d6", ms=7, mec="white", mew=1.5, capsize=3, label="$r_D/r_L$ (16–84 % noise range)")
         for yv, lab in ((0, "hypothesis: 0"), (ts, f"along the body normal: tan θ_s = {ts:.2f}"), (-ts, None)):
             ax.axhline(yv, color="#888888", lw=1, ls="-" if yv == 0 else "--")
             if lab:
-                ax.annotate(lab, (len(real) - 0.5, yv), xytext=(0, 4), textcoords="offset points", ha="right",
-                            fontsize=8, color="#555555")
+                ax.annotate(lab, (0, yv), xycoords=("axes fraction", "data"), xytext=(4, 4),
+                            textcoords="offset points", ha="left", fontsize=8, color="#555555")
         ax.set_xticks(x, [f"[{r['L']}/{r['M']}]\n0–{r['A']:g}°" for r in real], fontsize=7)
         ax.set_ylabel("$r_D / r_L$"); ax.set_title(f"Direction of the singular force, Re {re}", fontsize=11)
-        ax.grid(color="#e5e5e2", lw=0.8); ax.spines[["top", "right"]].set_visible(False); ax.legend(frameon=False, fontsize=8)
+        ax.grid(color="#e5e5e2", lw=0.8); ax.spines[["top", "right"]].set_visible(False); ax.legend(frameon=False, fontsize=8, loc="lower left")
         fig.tight_layout(); fig.savefig(OUT / f"residue_re{re}.png", dpi=150)
     txt = "\n".join(lines); print(txt)
     (OUT / f"residue_re{re}.txt").write_text(txt + "\n")

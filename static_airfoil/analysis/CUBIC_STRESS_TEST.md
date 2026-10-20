@@ -506,3 +506,28 @@ lift axis, against 10.8° for the body normal and order 1 for a random direction
 hypothesis predicts, with a small nonzero drag component, as route 2 requires. It is not "confirmed"
 under either stated rule. **The square-root fit also gives a new estimate of the fold location, 8.9°,**
 which the running chains test directly: both include 9°.
+
+## 11. Fold test, first results (Re 500, 20 October 2026)
+
+Ascending chain (this machine) on the E800 grid, at production tolerances. Each angle is seeded from the
+one below, starting from the converged 6° case. Script: `analysis/fold_check.py`; output
+`analysis/fold_check/`.
+
+![Left: models fitted on the tight 0–4.25° data, against the production data to 6° and the ascending chain. Right: |model − data|; the grey band is the data precision.](fold_check/fold_extrapolation.png)
+
+| α | C_L (chain) | dC_L/dα per degree | poly θ⁹ | poly θ¹¹ | Padé [3/2] | √ branch 8.92° |
+|---|---|---|---|---|---|---|
+| 6 | 0.495485 | — | +6e-6 | −1e-7 | −5e-5 | −5e-5 |
+| 7 | 0.563141 | 0.068 | −4e-5 | −9e-5 | −7e-4 | −7e-4 |
+| 8 | 0.617308 | 0.054 | −1.1e-3 | −1.4e-3 | −5.7e-3 | −7.2e-3 |
+| 9 | 0.652017 | 0.035 | −9.0e-3 | −1.0e-2 | −3.9e-2 | undefined |
+
+(The model columns are model minus chain C_L. The chain cases' remainders are ≤ 6e-6.)
+
+- **The steady branch continues smoothly through 9°.** Its slope falls, so C_L is approaching a maximum
+  near 9–9.5°. A smooth maximum is not a singularity; a fold would make the slope diverge.
+- **The polynomials extrapolate 4–10 times better than the Padé and square-root models.** The singular
+  models of sections 8 and 10 describe the series' growth on 0–4°; they do not predict the curve beyond it.
+- **The square-root branch point at 8.92° is contradicted on this branch,** unless the chain crossed onto
+  another one. The descending chain would show that as a disagreement.
+- Still running: 9.5–12° ascending, and the whole descending chain (`zero_thickness_plate/progress.py`).
