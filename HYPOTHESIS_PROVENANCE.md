@@ -66,3 +66,5 @@ Paths are under `static_airfoil/`.
 | C_D is even and carries the same information as C_L, including its singularities; analyse it | the user | 2026-10-20 | `analysis/drag_even_fit.py`, `CUBIC_STRESS_TEST.md` §9 |
 | Body-axis split (C_N, C_A) and the net leading-edge-suction fraction η = −A2/n1 | suggested by Claude Code (Claude Opus 5.5) | 2026-10-20 | `analysis/drag_even_fit.py` |
 | The singular parts of C_N and C_A cancel in C_D (the critical mode pushes the force nearly perpendicular to the freestream) | an inference written by Claude Code (Claude Opus 5.5); a hypothesis, untested | 2026-10-20 | `CUBIC_STRESS_TEST.md` §9 |
+| Test the cancellation by Padé of both forces and partial fractions | the user | 2026-10-20 | `analysis/residue_test.py`, `CUBIC_STRESS_TEST.md` §10 |
+| Shared denominator for the two forces; calibration on synthetic data; a direct square-root-branch fit as a third route | suggested by Claude Code (Claude Opus 5.5) | 2026-10-20 | `analysis/residue_test.py` |

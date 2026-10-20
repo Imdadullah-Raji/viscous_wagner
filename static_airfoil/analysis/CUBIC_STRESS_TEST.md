@@ -440,3 +440,69 @@ From thick to thin, d0 falls, d4 grows about 6 times, η rises and the polar rat
 - **The C_L singularity is robust only at Re 500.** At 700 and 900 its location moves with the fit order
   (7–10°), and the pole–zero pairs nearly cancel. That marks a weak feature, not a measured one. The
   Re 500 fold test (section 8) is still the direct check.
+
+## 10. Is the singular force along the lift? A residue test at Re 500 (20 October 2026)
+
+Section 9 left a hypothesis: C_D shows no consistent singularity because the singular parts of C_N and
+C_A cancel in it. Equivalently, near θ_s the singular part of the force points along the lift.
+
+**Method.** Separate Padé fits put the poles in different places, so their residues cannot be compared.
+Both forces are therefore fitted with **one shared denominator**: C_L = θ·P_L(z)/Q(z) and
+C_D = P_D(z)/Q(z). Each block is weighted by its own noise (σ_L = 8.1e-9, σ_D = 5.7e-10). Partial
+fractions then give both residues at the same pole, r_L and r_D. Their ratio r_D/r_L fixes the
+direction of the singular force from the lift axis.
+
+- The hypothesis predicts r_D/r_L ≈ 0.
+- A singular force along the body normal would give tan θ_s ≈ 0.19.
+- A random direction gives order 1.
+
+Script: `analysis/residue_test.py` (`python analysis/residue_test.py 500`). Output:
+`analysis/residue_test/`.
+
+**Three routes:**
+
+1. **Shared-denominator fits,** orders [1–3/1–3], windows 0–3.5°, 0–4° and 0–4.25°, 200 noise refits each.
+2. **Model comparison:** with Q fixed, C_D refitted with and without a pole at z_s.
+3. **Square-root model,** fitted directly: C_L/θ = poly₂(z) + B_L√(1 − z/z_s) with z_s scanned, then
+   C_D = poly₃(z) + B_D√(1 − z/z_s) with the same z_s. The ratio is B_D/(θ_s B_L).
+
+**Calibration, done twice.**
+
+- **The first synthetic set failed.** Its singularity was about 4 times weaker than the data's (a5 −99
+  against −367). The pole came out at 14°, and nonzero ratios were recovered about 30 % low.
+- **The second uses route 3's fit of the real data as the truth.** That fit reaches the noise floor, with
+  rms_L = 8.7e-9. B_D was then reset to give known ratios.
+
+| truth | 0 | 0.01 | 0.05 | 0.19 | 1.0 |
+|---|---|---|---|---|---|
+| [3/2] recovers | +0.002 | +0.011 | +0.044 | +0.157 | +0.69 |
+| [3/3] recovers | −0.042 | +0.016 | +0.013 | +0.234 | — |
+
+[3/2] is reliable for small ratios and reads 20–30 % low for large ones. [3/3] cannot tell 0 from 0.05.
+The criterion fixed in advance ("every order within max(0.05, 20 %)") fails, and so does the
+discrimination check added afterwards. Both fail because of [3/3].
+
+**Results:**
+
+- **Route 1.** Only [3/2] and [3/3] reach the noise floor; the lower orders leave C_L rms 5e-8 to 3e-5.
+  - [3/2] puts the shared pole at 9.6–11.0° with r_D/r_L = −0.002, +0.003, +0.007 over the three
+    windows, and P_D itself vanishes at the pole.
+  - [3/3] gives +0.04, and −0.07 (pole found in only 60 % of the noise refits).
+- **Route 2.** Forbidding the pole outright costs a factor of about 66 in C_D rms. So C_D's singular
+  part is small, but not exactly zero.
+- **Route 3.** Branch point at **θ_s = 8.92°**, below the Padé pole near 10.8°, as section 8's
+  zero-before-pole pattern predicted. The ratio is **B_D/(θ_s B_L) = +0.0049**.
+
+**Verdicts under the stated rules:**
+
+| rule | outcome | why |
+|---|---|---|
+| fixed in advance: all real-pole fits | REJECTED | driven by low orders that do not fit the data (rms 10²–10⁴ × the noise) |
+| amended after seeing the data: only fits at the noise floor | INCONCLUSIVE | driven by [3/3], which the calibration shows cannot discriminate |
+
+**Reading.** The two routes that are calibrated or model-based, [3/2] and the square-root fit, agree:
+**C_D's singular amplitude is about 0.5 % of C_L's.** The singular force then lies about 0.3° from the
+lift axis, against 10.8° for the body normal and order 1 for a random direction. That is what the
+hypothesis predicts, with a small nonzero drag component, as route 2 requires. It is not "confirmed"
+under either stated rule. **The square-root fit also gives a new estimate of the fold location, 8.9°,**
+which the running chains test directly: both include 9°.
