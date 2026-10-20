@@ -43,7 +43,8 @@ Some files differ from the workspace on purpose. All others are byte-identical c
   host and work directory with `$HOST_B` and `$REMOTE_B_DIR` (prose says "machine B"), and scripts get a
   header line saying so. Affected: `static_airfoil/make_case.sh` (one comment),
   `SESSION_HANDOFF_2026-10-20.md`, and in `zero_thickness_plate/`: `A3_RE500.md`, `phase2.sh`,
-  `monitor_rescaling.sh`, `tight/push_and_launch.sh`, `tight/status.sh`. Grep every new file for the
+  `monitor_rescaling.sh`, `tight/push_and_launch.sh`, `tight/status.sh`, and `progress.py` (its default
+  login becomes `set-CFD_USER`). Grep every new file for the
   login, the host name and its home path before copying.
 
 **OpenFOAM dictionaries without an extension** (`zero_thickness_plate/createBafflesDict`,

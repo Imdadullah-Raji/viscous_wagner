@@ -27,31 +27,38 @@ def cases(re):
                          d1000=cl[-1] - cl[i[tN - 1000]], d500=d[-1], q=q, rem=rem))
     return pd.DataFrame(rows)
 
-DROP = "--drop" in sys.argv
-for re in [a for a in sys.argv[1:] if not a.startswith("--")]:
-    df = cases(re)
-    df["off"] = df.cl - df["prod"]
-    # usable: last-500 change and extrapolated remainder both <= 3e-9 (target ~1e-9)
-    df["ok"] = (df.d500.abs() <= 3e-9) & ((df.rem.abs() <= 3e-9) | df.rem.isna() & (df.d500.abs() <= 1e-9))
-    print(f"\n######## Re {re}: {len(df)} tight cases, {df.ok.sum()} usable")
-    print(" aoa    iters        Cl(final)      tight-prod   d(last1000)  d(last500)  ratio  remain   ok")
-    for _, r in df.iterrows():
-        print(f" {r.aoa:4g}  {r.t0:5d}->{r.tN:5d}  {r.cl:.12f}  {r.off:+.2e}   {r.d1000:+.1e}    {r.d500:+.1e}  {r.q:+.2f}  {r.rem:+.1e}  {'Y' if r.ok else '-'}")
-    U = df[df.ok]; Pd = df.assign(cl=df["prod"])
-    amax = U.aoa.max()
-    # first unusable angle caps the windows (no holes)
-    bad = df[~df.ok].aoa
-    cap = amax if DROP else (min(amax, bad.min() - 1e-9) if len(bad) else amax)
-    U = U[U.aoa <= cap]; Pd = Pd[df.ok & (Pd.aoa <= cap)]
-    step = np.diff(U.aoa).min()
-    As = [a for a in np.arange(2.0, cap + 1e-9, 0.5)]
-    for name, d in (("TIGHT", U), ("PRODUCTION (same angles)", Pd)):
-        print(f"\n== Re {re} {name}: {len(d)} angles {d.aoa.min():g}-{d.aoa.max():g} step {step:g}")
-        for degs in ((1, 3, 5, 7), (1, 3, 5, 7, 9), (1, 3, 5, 7, 9, 11)):
-            for A in As:
-                n = ((d.aoa > 0) & (d.aoa <= A + 1e-9)).sum()
-                if n < len(degs) + 2: continue
-                a, se, rms, n = fit_window(d, A, degs)
-                print(f"  P1-P{max(degs):<2} 0-{A:<4g} n={n:2d} dof={n-len(degs)} rms={rms:.1e} " + " ".join(
-                    f"a{k}={a[k]:+.6g}±{se[k]:.1g}" for k in degs) +
-                    f" | R35={np.degrees(np.sqrt(abs(a[3]/a[5]))):.1f}° R57={np.degrees(np.sqrt(abs(a[5]/a[7]))):.1f}°")
+
+def main():
+    global DROP
+    DROP = "--drop" in sys.argv
+    for re in [a for a in sys.argv[1:] if not a.startswith("--")]:
+        df = cases(re)
+        df["off"] = df.cl - df["prod"]
+        # usable: last-500 change and extrapolated remainder both <= 3e-9 (target ~1e-9)
+        df["ok"] = (df.d500.abs() <= 3e-9) & ((df.rem.abs() <= 3e-9) | df.rem.isna() & (df.d500.abs() <= 1e-9))
+        print(f"\n######## Re {re}: {len(df)} tight cases, {df.ok.sum()} usable")
+        print(" aoa    iters        Cl(final)      tight-prod   d(last1000)  d(last500)  ratio  remain   ok")
+        for _, r in df.iterrows():
+            print(f" {r.aoa:4g}  {r.t0:5d}->{r.tN:5d}  {r.cl:.12f}  {r.off:+.2e}   {r.d1000:+.1e}    {r.d500:+.1e}  {r.q:+.2f}  {r.rem:+.1e}  {'Y' if r.ok else '-'}")
+        U = df[df.ok]; Pd = df.assign(cl=df["prod"])
+        amax = U.aoa.max()
+        # first unusable angle caps the windows (no holes)
+        bad = df[~df.ok].aoa
+        cap = amax if DROP else (min(amax, bad.min() - 1e-9) if len(bad) else amax)
+        U = U[U.aoa <= cap]; Pd = Pd[df.ok & (Pd.aoa <= cap)]
+        step = np.diff(U.aoa).min()
+        As = [a for a in np.arange(2.0, cap + 1e-9, 0.5)]
+        for name, d in (("TIGHT", U), ("PRODUCTION (same angles)", Pd)):
+            print(f"\n== Re {re} {name}: {len(d)} angles {d.aoa.min():g}-{d.aoa.max():g} step {step:g}")
+            for degs in ((1, 3, 5, 7), (1, 3, 5, 7, 9), (1, 3, 5, 7, 9, 11)):
+                for A in As:
+                    n = ((d.aoa > 0) & (d.aoa <= A + 1e-9)).sum()
+                    if n < len(degs) + 2: continue
+                    a, se, rms, n = fit_window(d, A, degs)
+                    print(f"  P1-P{max(degs):<2} 0-{A:<4g} n={n:2d} dof={n-len(degs)} rms={rms:.1e} " + " ".join(
+                        f"a{k}={a[k]:+.6g}±{se[k]:.1g}" for k in degs) +
+                        f" | R35={np.degrees(np.sqrt(abs(a[3]/a[5]))):.1f}° R57={np.degrees(np.sqrt(abs(a[5]/a[7]))):.1f}°")
+
+
+if __name__ == "__main__":
+    main()

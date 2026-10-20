@@ -291,3 +291,75 @@ production values of section 5 in brackets):
 - **NACA0012, NACA0006 and the 2.3 % plate** ran with the same production tolerances. Their a5 and a7
   in sections 2–4 are unverified, and their a3 should be checked the same way.
 - The a5 mesh sensitivity (E560 against E800) is still unmeasured.
+
+## 8. Locating the singularity: Padé and AAA at Re 500 (20 October 2026)
+
+C_L is odd, so C_L = θ·g(z) with z = θ². A pole of a rational approximant of g at z_p puts a
+singularity at θ = ±√z_p: on the real α axis if z_p > 0, on the imaginary axis if z_p < 0, a complex
+pair otherwise. Data: the 17 re-converged angles at Re 500 (0.25–4.25°, section 7), and the production
+sweep to 6° as a check.
+
+- Script: `analysis/pade_singularity.py` (`python analysis/pade_singularity.py 500 [--prod]`, research
+  env).
+- Outputs: `analysis/pade_singularity/`.
+
+**Three routes:**
+
+- **A. Classical Padé of the fitted Taylor coefficients** (`scipy.interpolate.pade`): fails. Its poles
+  jump between 4 and 26°, and it produces doublets on the imaginary axis. Padé of a series amplifies
+  errors in the highest coefficients, and a9 and a11 are uncertain by 20–100 %. Kept as a record.
+- **B. Rational least squares** C_L = θ·P_L(z)/Q_M(z), fitted directly to C_L, with z scaled to [0, 1]
+  and Sanathanan–Koerner reweighting. Orders [1/1] to [4/3], windows 0–3° to 0–4.25°, and refits with
+  noise of the fit's own rms (about 8e-9, the scatter between angles).
+- **C. AAA** (`scipy.interpolate.AAA`): barycentric rational approximation with its own doublet
+  handling, independent of B's basis. Fitted to C_L(θ) mirrored to ±θ and to g(z), over tolerances
+  1e-5 to 1e-8.
+
+**Froissart doublets** are poles cancelled by a zero on top of them: noise-fitting artefacts. A pole
+is counted as genuine only if it has no zero within 1 % (in z), its residue is not negligible, and it
+stays put across orders, windows and noise. In the [3/2] fit, for example:
+
+| | pole at 3.11° | pole at 10.85° |
+|---|---|---|
+| nearest zero | 3.11°: on top of it | 10.36°: 9 % away in z |
+| residue | 1.2e-8 | 3.1 |
+| contribution to C_L at the data edge | 1.9e-9 (below the noise) | 4.1e-2 (most of the nonlinearity) |
+| across fit orders | 2.5–6.3°, moves | 10.71–10.85°, fixed |
+
+**Result: one real-axis pole near 10.8°, with a zero just before it.**
+
+| route | data | genuine nearest pole | zero before it |
+|---|---|---|---|
+| B | tight, windows 0–3.5° to 0–4.25°, all orders | 10.71–11.00° | 10.26–10.37° |
+| B | production, windows to 0–6° | 10.71–11.31° | 10.25–10.71° |
+| C | tight, loose tolerance (2–4 terms) | 10.74–10.76° | 10.28–10.30° |
+| C | tight, tight tolerance (interpolates the noise) | 10.74–10.82°, plus doublets of residue 1e-12 to 1e-7 | — |
+| C | production, same angles | 10.68–10.79° | 10.24–10.31° |
+
+- **No complex or imaginary-axis pole** appears nearer than this, in any route.
+- **Extra degrees of freedom go into doublets** inside the data range. The data resolve one singular
+  feature and no more.
+- **Zero before pole.** That is how a Padé approximant represents a branch point with a positive
+  exponent: the [1/1] Padé of √(1 − x), branch point at 1, has its zero at 4/3 and its pole at 4. For
+  1/√(1 − x) the order is reversed. The pattern fits a square-root branch point, such as a fold
+  C_L ~ √(α_s − α), at or a little below about 10.3°. One pole–zero pair cannot fix the exponent.
+
+**Limits:**
+
+1. **The low orders are not new information.** The [1/1] pole is √|a3/a5| and the [2/1] pole is
+   √|a5/a7|. The higher orders and AAA show that the feature persists, but they add no second one.
+2. **Rational fits do not extrapolate better.** Fitted on 0–4.25°, polynomials to θ⁹ and θ¹¹ predict
+   the production C_L at 4.5–6° to within 7e-6, which is inside the production bias. The rational fits
+   miss by 5e-5 to 1e-4 at 6°. On 0–6°, one-pole fits leave rms 3e-7 to 3e-6.
+3. **10.8° is 2.5 times beyond the data.** The location is robust across methods. That C_L really has a
+   singularity there is not established.
+
+**The direct test is running** (`zero_thickness_plate/fold/`): steady runs at Re 500 on the same E800
+grid at 7–12°, in two chains.
+
+- **Ascending, this machine:** 7, 8, 9, 9.5, 10, 10.5, 11, 12°, each seeded from the angle below,
+  starting from the converged 6° case.
+- **Descending, cfd-test:** 12° from a cold start, then 11, 10.5, 10, 9.5, 9°, each seeded from above.
+- **How to read it:** a fold would show as SIMPLE losing convergence, C_L steepening like a square root,
+  or the two chains disagreeing over a band of angles (hysteresis). If the chains agree and C_L stays
+  smooth through 10–11°, the singularity is not a real-axis fold.

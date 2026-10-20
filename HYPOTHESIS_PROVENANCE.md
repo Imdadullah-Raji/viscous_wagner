@@ -47,3 +47,14 @@ Paths are under `static_airfoil/`.
 | One-signed coefficients a3…a11 point to a real-axis singularity near 9–11° (e.g. a fold) | an inference written by Claude Code (Claude Opus 5.5); a hypothesis, not tested | 2026-10-20 | `CUBIC_STRESS_TEST.md` §7 |
 
 Paths are under `static_airfoil/`.
+
+## Locating the singularity (20 October 2026)
+
+| idea | source | where it enters | record |
+|---|---|---|---|
+| Padé approximants in θ² to locate the singularity limiting the radius | proposed by Claude Code (Claude Opus 5.5) as a next step in the stress test; run at the user's request | 2026-10-20 | `analysis/pade_singularity.py`, `CUBIC_STRESS_TEST.md` §8 |
+| AAA as a robust cross-check of the Padé poles | suggested by Claude Code (Claude Opus 5.5), after the user asked why `scipy.interpolate.pade` is not robust | 2026-10-20 | `analysis/pade_singularity.py` (route C) |
+| The zero-then-pole pair near 10.3–10.8° reads as a square-root branch point, e.g. a fold | an inference written by Claude Code (Claude Opus 5.5); a hypothesis, under test | 2026-10-20 | `CUBIC_STRESS_TEST.md` §8 |
+| Test the fold directly with ascending and descending steady chains, looking for hysteresis | suggested by Claude Code (Claude Opus 5.5) | 2026-10-20 | `zero_thickness_plate/fold/` |
+
+Paths are under `static_airfoil/`.
