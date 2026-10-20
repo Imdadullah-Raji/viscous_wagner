@@ -51,11 +51,12 @@ def load(base, re=500):
     return df[df.verdict == "CONVERGED"].sort_values("aoa").reset_index(drop=True)
 
 
-def fit_window(df, A, degs):
-    """One-sided odd fit on 0 < alpha <= A.  Returns monomial coefficients, their standard errors,
+def fit_window(df, A, degs, col="cl", include_zero=False):
+    """One-sided fit on 0 < alpha <= A (odd degs), or 0 <= alpha <= A with include_zero (an even series
+    such as C_D, whose value at 0 fixes d0).  Returns monomial coefficients, their standard errors,
     the rms residual and the number of points."""
-    d = df[(df.aoa > 1e-9) & (df.aoa <= A + 1e-9)]
-    x, y = d.aoa.to_numpy() / A, d.cl.to_numpy()
+    d = df[(df.aoa > (-1e-9 if include_zero else 1e-9)) & (df.aoa <= A + 1e-9)]
+    x, y = d.aoa.to_numpy() / A, d[col].to_numpy()
     X = basis(x, degs)
     c, *_ = np.linalg.lstsq(X, y, rcond=None)
     r = y - X @ c

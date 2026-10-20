@@ -58,3 +58,11 @@ Paths are under `static_airfoil/`.
 | Test the fold directly with ascending and descending steady chains, looking for hysteresis | suggested by Claude Code (Claude Opus 5.5) | 2026-10-20 | `zero_thickness_plate/fold/` |
 
 Paths are under `static_airfoil/`.
+
+## Drag (20 October 2026)
+
+| idea | source | where it enters | record |
+|---|---|---|---|
+| C_D is even and carries the same information as C_L, including its singularities; analyse it | the user | 2026-10-20 | `analysis/drag_even_fit.py`, `CUBIC_STRESS_TEST.md` §9 |
+| Body-axis split (C_N, C_A) and the net leading-edge-suction fraction η = −A2/n1 | suggested by Claude Code (Claude Opus 5.5) | 2026-10-20 | `analysis/drag_even_fit.py` |
+| The singular parts of C_N and C_A cancel in C_D (the critical mode pushes the force nearly perpendicular to the freestream) | an inference written by Claude Code (Claude Opus 5.5); a hypothesis, untested | 2026-10-20 | `CUBIC_STRESS_TEST.md` §9 |

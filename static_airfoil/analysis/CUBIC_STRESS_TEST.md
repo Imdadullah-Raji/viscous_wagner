@@ -363,3 +363,80 @@ grid at 7–12°, in two chains.
 - **How to read it:** a fold would show as SIMPLE losing convergence, C_L steepening like a square root,
   or the two chains disagreeing over a band of angles (hysteresis). If the chains agree and C_L stays
   smooth through 10–11°, the singularity is not a real-axis fold.
+
+## 9. Drag: the even half of the same expansion (20 October 2026)
+
+For a symmetric body C_D is even in α: C_D = d0 + d2 θ² + d4 θ⁴ + …. It is a functional of the same
+steady solution as C_L, so its singularities lie in the same set. Body axes split the force into a
+normal part C_N = C_L cos θ + C_D sin θ (odd) and an axial part C_A = C_D cos θ − C_L sin θ (even).
+
+- To second order these are tied exactly: **n1 = a1 + d0** and **d2 = n1 + A2 − A0/2**. Both checks
+  close to 1e-9 and 1e-5 respectively.
+- The **net suction fraction η = −A2/n1** compares the θ² axial force with the normal-force slope. For
+  the potential flat plate (C_A = −2πθ², C_N = 2πθ) η = 1 and there is no drag rise. In viscous flow A2
+  also contains the change of skin friction with α, so η is net of it.
+
+Script: `analysis/drag_even_fit.py` (`python analysis/drag_even_fit.py 500 700 900 [--prod]`, and
+`--bodies` for the four bodies on production data, research env). Outputs, including the figure
+`drag.png`: `analysis/drag_even_fit/`.
+
+**C_D converges far better than C_L.**
+
+- The tight-run tails move by 1e-11 to 5e-10 per 500 iterations, and every tight angle is usable for
+  C_D, including 4.5–5° where C_L is not.
+- The even fits leave rms 2e-10 to 7e-10, against about 8e-9 for C_L.
+- Production C_D is biased by 1e-9 to 8e-8 below 4.25° (C_L: 1e-7 to 4e-6). Fitted to the zero-thickness
+  plate, it gives d0 and d2 to 3e-5 and d4 to 0.3–0.6 %, but not d6.
+- **The α = 0 point** comes from the production 0° case and has to pass the same tail test. At Re 500 and
+  700 it does, with about 2e-9 remaining. At Re 900 it stopped at 6000 iterations, still moving 2.3e-7 per
+  500, and is dropped. The fit's d0 = 0.1026093 then matches that case's extrapolated end value
+  (0.1026094).
+
+![Zero-thickness plate, tight data. Left: (C_D − d0)/C_L² against C_L², constant for a parabolic polar. Right: (C_D − d0)/θ², which tends to d2 as α → 0.](drag_even_fit/drag.png)
+
+**Coefficients, zero-thickness plate (tight data, P0–P10 even fits, windows 0–4° to 0–5°):**
+
+| Re | d0 | d2 | d4 | d6 | √\|d2/d4\| | η | d2/a1² |
+|---|---|---|---|---|---|---|---|
+| 500 | 0.1421739 | 1.24534 | 14.86 | 32–34 | 16.6° | 0.741 | 0.0511 |
+| 700 | 0.1178845 | 1.15176 | 18.65 | 102–106 | 14.2° | 0.766 | 0.0449 |
+| 900 | 0.1026093 | 1.08174 | 21.53 | 159–167 | 12.8° | 0.785 | 0.0407 |
+
+- **d0, d2 and d4 are resolved** (spread within a few standard errors). d6 is borderline: it depends on
+  the window by about 5 %.
+- **Every coefficient is positive.** d4 and d6 grow with Re.
+- **d0 exceeds the two-sided Blasius value 2 × 1.328/√Re by 20 % (Re 500) to 16 % (Re 900).** The excess
+  shrinks with Re, as finite-Re edge corrections should.
+- **η rises with Re (0.74 → 0.79):** more of the potential-flow suction survives as viscosity weakens.
+- **(C_D − d0)/C_L² grows almost linearly in C_L²** (figure, left), so the drag polar departs from a
+  parabola from the start.
+
+**The four bodies at Re 500 (production data, P0–P8 and P1–P9, windows 0–4° and 0–6°):**
+
+| body | d0 | d2 | d4 | η | d2/a1² |
+|---|---|---|---|---|---|
+| NACA0012 | 0.17413 | 1.087 | 2.5–2.6 | 0.659 | 0.102 |
+| NACA0006 | 0.15694 | 1.144 | 6.6 | 0.722 | 0.064 |
+| plate t/c 0.023 | 0.15351 | 1.253 | 10.3–10.4 | 0.733 | 0.054 |
+| zero-thickness plate | 0.14217 | 1.245 | 14.6–14.9 | 0.741 | 0.051 |
+
+From thick to thin, d0 falls, d4 grows about 6 times, η rises and the polar ratio halves.
+
+**Singularities (routes B and C of section 8, the doublet tests applied):**
+
+| Re | from C_L | from C_N | from C_A | from C_D |
+|---|---|---|---|---|
+| 500 | 10.7–10.9°, zero before | 10.7–10.9°, zero before | 11.5° (AAA 11.46°), zero at 11.0° before it | none consistent |
+| 700 | 8.6–10.3°, unsettled | 7.7–10.2°, unsettled | 9.1–9.2° (AAA 9.06°), zero at 9.5° after it | none consistent |
+| 900 | 7.0–10.4°, unsettled | unsettled | 7.3–7.9° (AAA 7.93°), zero at 7.4–8.6° after it | none consistent |
+
+- **C_D shows no consistent singularity at any Re.** Its poles scatter between 8 and 37°, some on the
+  imaginary axis, and AAA's are doublets. **C_A shows one in every order and in AAA**, moving toward
+  α = 0 as Re rises: 11.5°, 9.2°, about 7.6°.
+- **A possible reading (hypothesis):** C_D = C_N sin θ + C_A cos θ. If near the singularity the singular
+  parts satisfy sing(C_A) ≈ −tan θ_s · sing(C_N), they cancel in C_D and survive in C_L and C_N. The
+  critical mode would then push the force nearly perpendicular to the freestream. Comparing the
+  residues of C_A and C_N at a common pole would test this; it has not been done.
+- **The C_L singularity is robust only at Re 500.** At 700 and 900 its location moves with the fit order
+  (7–10°), and the pole–zero pairs nearly cancel. That marks a weak feature, not a measured one. The
+  Re 500 fold test (section 8) is still the direct check.
