@@ -35,9 +35,20 @@ viscous-wagner/
     └── sample_cases/           (exists only in the repo)
 ```
 
-Five files differ from the workspace on purpose. All others are byte-identical copies.
+Some files differ from the workspace on purpose. All others are byte-identical copies.
 - `README.md`, `HYPOTHESIS_PROVENANCE.md` and the two `sample_cases/README.md` exist only in the repo.
 - `plate_case/run_batch.sh` was rebuilt from a session transcript, because cfd-test was unreachable.
+- **Redacted copies (2026-10-20).** The repo is public, so login names, the friend's machine and its
+  paths stay out of it. Repo copies replace the cfd-test login with `$CFD_USER`, the second machine's
+  host and work directory with `$HOST_B` and `$REMOTE_B_DIR` (prose says "machine B"), and scripts get a
+  header line saying so. Affected: `static_airfoil/make_case.sh` (one comment),
+  `SESSION_HANDOFF_2026-10-20.md`, and in `zero_thickness_plate/`: `A3_RE500.md`, `phase2.sh`,
+  `monitor_rescaling.sh`, `tight/push_and_launch.sh`, `tight/status.sh`. Grep every new file for the
+  login, the host name and its home path before copying.
+
+**OpenFOAM dictionaries without an extension** (`zero_thickness_plate/createBafflesDict`,
+`fvSolution.tight`) are inputs the scripts copy into cases; the check below does not list them, so
+look for them by hand.
 
 ## What goes in
 

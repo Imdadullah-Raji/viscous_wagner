@@ -1,8 +1,16 @@
 ---
 title: "Stress test of the cubic-at-origin claim"
 subtitle: "Steady lift, four bodies at Re = 500, and the zero-thickness plate's Re dependence"
-date: "19 October 2026"
+date: "19 October 2026; correction added 20 October 2026"
 ---
+
+> **Correction, 20 October 2026: read section 7 first.** Every steady case behind this note ran with the
+> production solver tolerances (p 1e-7, U 1e-8). Those stall 1e-7 to 2e-5 in C_L short of the fixed
+> point, by an error that is smooth in α. The fits absorb it, and the window test of section 3 cannot
+> see it. Re-converged ("tight") data for the zero-thickness plate at Re 500, 700 and 900 give:
+> a3 within 0.1 % of the values below at Re 500 and 700 and 0.5 % at Re 900; a5 off by 3 % to over 50 %; and
+> a radius of about 9.5–10.7° instead of 6–8° at Re 900. Claims that no longer hold are marked
+> **[superseded, §7]** where they appear. The other three bodies have not been re-converged.
 
 This note covers the steady (SIMPLE) lift at small angles of four bodies at Re = 500: NACA0012,
 NACA0006, the 2.3 %-thick stadium plate, and the zero-thickness plate on the elliptic grid. The
@@ -42,10 +50,11 @@ Odd Legendre P1…Pk fits on windows 0–A, converted to powers of θ, with leas
 | NACA0012 | −28.22 ± 0.01 | −28.0 to −29.3 at 10–12° | −72 ± 2 (P1–P7, stable 4–8°) |
 | NACA0006 | −24.8 ± 0.02 | −23.2 to −24.9 at 8–12° | −300 to −320 (stable to 10° with P1–P9) |
 | plate t/c 0.023 | −18.9 ± 0.02 | −18 at 8°, collapses beyond 10° | −420 to −430 (to 6°) |
-| zero-thickness plate | −12.79 ± 0.02 (P1–P9) | data end at 6° | −376 to −392 (P1–P9) |
+| zero-thickness plate | −12.79 ± 0.02 (P1–P9) | data end at 6° | −376 to −392 (P1–P9) **[superseded, §7: −367 ± 2]** |
 
 - **a3 is fixed to 0.1 % or better** inside each body's validity range, independent of window and of
-  P1–P7 against P1–P9.
+  P1–P7 against P1–P9. *(§7: this is the spread between fits of the same production data. Against
+  re-converged data the zero-thickness plate's a3 moves 0.13 % at Re 500 and 0.5 % at Re 900.)*
 - **a3 and a5 have the same sign for all four bodies.**
 - **Outside the validity range, the fit coefficients become window-dependent:**
   - for NACA0012 from about 10°;
@@ -55,7 +64,9 @@ Odd Legendre P1…Pk fits on windows 0–A, converted to powers of θ, with leas
 ## 3. Resolution: what the data can and cannot fix
 
 **The noise floor.** Converged steady C_L is repeatable to about 1e-8. The fit residual rms is
-6e-8 to 3e-7 on windows up to 6°, which sets the effective noise.
+6e-8 to 3e-7 on windows up to 6°, which sets the effective noise. **[superseded, §7]** The 1e-8 is the
+repeatability of a stalled state, not its accuracy: the production runs stop 1e-7 to 2e-5 from the
+fixed point, by an amount that is smooth in α and is not part of the rms.
 
 **Other error sources:**
 
@@ -87,7 +98,9 @@ error:
   (section 5).
 - **What limits us is range and truncation, not noise.** The data end at 6° (zero-thickness plate),
   12° (plate) and 20° (airfoils). Beyond those ranges the higher-order content cannot be separated from
-  the coefficients being sought.
+  the coefficients being sought. **[superseded, §7]** A third limit was missed: the solver-tolerance bias.
+  It is smooth in α, so this test passes it. The Re 700 a5 of section 5 passed (spread/se ≈ 4) at −405,
+  against −376 from re-converged data.
 
 ## 4. How much does a5 help? Extrapolating truncations fitted on 0–4°
 
@@ -141,6 +154,9 @@ coefficients):
 a1 is the Richardson limit and a3 the P1–P7 plateau over 2.25–4° (plateau spread 0.005–0.045, at most
 0.5 %).
 
+**[superseded, §7]** The a5 and radius columns of this table, and the four bullets below, are production
+data. Re-converged at Re 500 / 700 / 900: a5 = −367 / −376 / −313, radius about 10.7° / 9.5° / 9.4°.
+
 - **At Re 800 and 900, a5 is not resolved from 0–6°.** The P1–P9 a5 moves with the window by far more
   than its standard error: Re 900 gives −485 ± 28 (window 0–5°), −583 ± 32 (0–5.5°) and −805 ± 68 (0–6°).
   The ranges in the table are the 0–5° and 0–6° values. This is what a radius of 6–8° predicts: the 6°
@@ -181,10 +197,12 @@ a1 is the Richardson limit and a3 the P1–P7 plateau over 2.25–4° (plateau s
 
 - All four bodies are analytic at the origin with a finite, nonzero a3; there is no non-analytic term.
 - a3 is robust to 0.1 % for each body, and to about 1 % including mesh error for the zero-thickness
-  plate.
-- a5 is measurable for all bodies, a7 for NACA0012 only.
+  plate. *(§7: 0.5 % at Re 900 against re-converged data; still inside the 1 %.)*
+- a5 is measurable for all bodies, a7 for NACA0012 only. *(§7: the production a5 values are biased;
+  re-converged, the zero-thickness plate's a5 is resolved at Re 500–900, and a7 borderline.)*
 - The truncation range and the two-term radius shrink with thickness. For the zero-thickness plate
-  they also shrink with Re.
+  they also shrink with Re. *(§7: over Re 500–900 the re-converged radius shrinks only from about
+  10.7° to 9.4°.)*
 
 **Not established:**
 
@@ -199,3 +217,77 @@ a1 is the Richardson limit and a3 the P1–P7 plateau over 2.25–4° (plateau s
 3. Extend the zero-thickness plate beyond 6° at Re 800–900 (or refine to 0.25°), so that a5 can be
    resolved where the radius is smallest.
 
+## 7. Correction (20 October 2026): the production data carry a solver-tolerance bias
+
+**What happened.** Every steady case in this note used the production linear-solver settings: p
+`tolerance 1e-7`, U `tolerance 1e-8`, both with `relTol 0.01`. A solve stops at whichever comes
+first, r < tolerance or r < relTol·r₀. Once the initial residual r₀ falls below tolerance/relTol =
+1e-5, the absolute tolerance is the limit that binds. Late in a run, U solves then do 0 iterations and p
+solves do 0–2, so each SIMPLE iteration removes almost nothing. SIMPLE contracts the error by only
+ρ ≈ 0.998 per iteration, and the run stalls at a distance of about step/(1 − ρ) from the fixed point:
+**1e-7 to 2e-5 in C_L, growing with α.** The 1e-8 "repeatability" of section 3 is the repeatability of
+that stall.
+
+**The fix.** Each case was continued with `fvSolution.tight` (tolerance 1e-12, same relTol 0.01) for
+3000 or more further iterations, so the tolerance never binds. An angle is counted as usable when its
+last 500 iterations moved C_L by at most 3e-9 and the geometrically extrapolated remainder is also
+within 3e-9.
+
+- Scripts: `zero_thickness_plate/tighten_case.sh` and `zero_thickness_plate/tight/`; analysis in
+  `analysis/tight_compare.py` (`python analysis/tight_compare.py 500 700 900 --drop`, research env).
+- Outputs: `analysis/tight_compare/`.
+- Same elliptic grid as sections 2–5.
+
+**How the bias entered the fits.** It depends on whether the angles were run the same way:
+
+- **Run the same way** (Re 500, and Re 700 on the 0.5° grid): the error is smooth in α (Re 700:
+  −6e-7 at 2–2.5°, +3.5e-6 at 4°, +8e-6 at 4.5°). A smooth error is absorbed into the coefficients, so
+  every window shifts together and the spread/se test of section 3 passes. Re 700's production a5
+  (−405 ± 1, −409 ± 1) was stable across windows and 8 % wrong.
+- **Run two ways** (the 0.25° quarter angles, seeded separately, mixed with the 0.5° angles at Re 700
+  and 900): neighbouring angles stall on opposite sides of the fixed point. Fits of the mixed
+  production data have rms 4e-7, and a5 changes sign between windows.
+- **A window-stability test cannot detect an error that all the data share.** Only re-converged data
+  can.
+
+**Re-converged coefficients, zero-thickness plate** (odd Legendre fits, converted to θ powers; the
+production values of section 5 in brackets):
+
+| Re | usable angles | a1 | a3 | a5 | a7 | sqrt\|a3/a5\| | sqrt\|a5/a7\| |
+|---|---|---|---|---|---|---|---|
+| 500 | 17: 0.25–4.25° at 0.25° | 4.93491 | −12.806 (−12.79) | −367 ± 2 (−380) | ≈ −9500 ± 1000 | 10.7° | 10–11° |
+| 700 | 15: 0.25–3.75° at 0.25° | 5.06595 | −10.528 (−10.52) | −376 ± 4 (−405 to −482) | ≈ −1.2e4 to −1.6e4 | 9.5° | 8.6–10.4° |
+| 900 | 12: 0.25–4°, with gaps | 5.15642 | −8.342 (−8.30) | −313 ± 2 (−485 to −805) | ≈ −1.1e4 to −1.25e4 | 9.4° | 9.0–9.6° |
+
+- **Re 500:** P1–P9 a5 settles at −370.5, −368.2, −367.4 on windows 0–3, 0–3.5 and 0–4°; P1–P11 gives
+  −364 and −367.
+- **Re 700:** P1–P9 a5 is flat over 0–2 to 0–3.5° (−379, −374, −378, −380). P1–P11 gives about −373. The
+  difference between the fit orders is most of the error bar, and a7 differs by about 30 % between them.
+- **Re 900 needs P1–P11 on 0–4°:** P1–P9 rms rises from 2e-9 to 1e-8 there. P1–P11 keeps rms at 1.6e-9
+  and a5 at −314, −313, −313, −312 over windows 0–2.5 to 0–4°.
+- **a9 and a11 are not resolved** at any Re.
+
+**What this changes:**
+
+1. **a3:** within 0.13 % (Re 500) and 0.08 % (Re 700) of section 5, and 0.5 % at Re 900. The 0.1 %
+   claim fails only at Re 900, and stays inside the 1 % that includes mesh error. a3 still falls
+   almost linearly: by 1.14 per 100 in Re over 500–700 and 1.09 over 700–900.
+2. **a5:** the production values are biased by 3 % (Re 500) to 55 % or more (Re 900). Re-converged,
+   **|a5| does not grow with Re over 500–900** (−367, −376, −313). The "|a5| grows 3–5×" and the
+   Re^−0.63 shrinkage of section 5 rest on production a5 and are withdrawn for Re 500–900. Re 200–400,
+   600 and 800 have not been re-converged.
+3. **Radius:** the two ratio estimates sqrt|a3/a5| and sqrt|a5/a7| now agree at each Re. The radius
+   falls only from about 10.7° (Re 500) to 9.4° (Re 900), not to 6–8°. It no longer tracks the plate's
+   leading-edge bubble formation angle (5.75° at Re 900).
+4. **Sign pattern (hypothesis, not result):** at Re 900 every fitted coefficient from a3 to a11 is
+   negative. Coefficients of one sign point to a nearest singularity on the real α axis, here near
+   9–11°. For a fold this is the √(α_s − α) branch point of section 5.
+
+**Not yet done:**
+
+- **Twelve angles are still not converged** after the tight phase: Re 500 at 4.5–5°; Re 700 at 4–4.5°;
+  Re 900 at 0.75, 3, 3.25, 3.75, 4.25 and 4.5°. Above about 3°, 3000 tight iterations are not enough.
+  Finishing them extends the windows to 4.5–5°, which is what a7 needs.
+- **NACA0012, NACA0006 and the 2.3 % plate** ran with the same production tolerances. Their a5 and a7
+  in sections 2–4 are unverified, and their a3 should be checked the same way.
+- The a5 mesh sensitivity (E560 against E800) is still unmeasured.

@@ -6,13 +6,15 @@ programme asks what replaces it when viscosity dominates. It was prompted by S. 
 S. T. M. Dawson (2021), *Improved Approximation to the Wagner Function by Sparse Identification of
 Nonlinear Dynamics*.
 
-2D laminar CFD with OpenFOAM (Foundation), on three symmetric sections at Re = 100–2000:
+2D laminar CFD with OpenFOAM (Foundation), on three symmetric sections at Re = 100–2000, and a
+zero-thickness plate at Re = 200–900:
 
 | body | thickness t/c | section |
 |---|---|---|
 | NACA0012 | 0.12 | NACA 4-digit, cut at 0.98 of its length (blunt trailing edge), rescaled to unit chord |
 | NACA0006 | 0.06 | NACA 4-digit, cut at 0.98 of its length (blunt trailing edge), rescaled to unit chord |
 | flat plate | **0.023** (2.3 % of chord) | stadium: flat sides with semicircular leading and trailing edges of radius 0.0115c, overall length c = 1 (after the Eldredge & Wang plate) |
+| zero-thickness plate | 0 | a line of length c, meshed as an internal baffle on a confocal elliptic grid (`static_airfoil/zero_thickness_plate/`) |
 
 ## Where it stands: the steady baseline
 
@@ -57,6 +59,16 @@ The commit history follows the research decisions in order.
      repeated for NACA0006 and the plate.
    - A laminar-separation-bubble explanation of the curvature was tested and rejected
      (`static_airfoil/lsb/HYPOTHESIS_TEST.md`).
+4. **Mid-October: the zero-thickness plate and the stress test.**
+   - The user's block mesh for a zero-thickness plate was ported to Python. Its H-type grid gave a
+     spurious θ^3.4 deficit; on an orthogonal elliptic grid the plate is cubic like the others
+     (`zero_thickness_plate/A3_RE500.md`).
+   - A stress test of "cubic at the origin": a3 robustness, what a5 adds, and the radius of
+     convergence (`static_airfoil/analysis/CUBIC_STRESS_TEST.md`, `reports/cubic_baseline/`).
+   - **Correction (2026-10-20):** the production solver tolerances stall C_L 1e-7 to 2e-5 short of
+     the fixed point, by an error smooth in α that the fits absorb. Re-converged data for the
+     zero-thickness plate keep a3 (within 0.5 %) but change a5 by 3 % to over 50 %, and put the
+     radius at about 9.5–10.7° for Re 500–900 (section 7 of the stress test).
 
 Where each idea and hypothesis came from (the user, ChatGPT, Claude) is in
 [`HYPOTHESIS_PROVENANCE.md`](HYPOTHESIS_PROVENANCE.md).
@@ -68,6 +80,7 @@ plan/                 campaign plan (September)
 static_airfoil/       NACA sections: drivers (*.sh), meshing/, analysis/, lsb/, notes (*.md),
                       instructions/ (the research brief for each step), reports/ (LaTeX),
                       NACA0012/, NACA0006/ (per-sweep driver scripts and notes), sample_cases/
+                      zero_thickness_plate/ (meshers, sweep and tight re-convergence drivers)
 plate_case/           thick flat plate: plate_mesher.py, run_sweep.py, run_batch.sh, analysis/,
                       sample_cases/
 ```
@@ -87,13 +100,14 @@ in `static_airfoil/analysis/figs/`.
 
 | machine | cores used | OpenFOAM |
 |---|---|---|
-| Intel i5-12400 (main box; 6 physical cores) | 6 ranks | dev (build `dev-e4f852e7fd6a` in the October logs) |
-| AMD Ryzen 7 7700 (8 cores) | 6 ranks | v14 |
+| Intel i5-12400 (main box; 6 physical cores) | 6 ranks | dev (build `dev-e4f852e7fd6a` in the October logs) until 2026-10-19, then v14 (build `14-a4867fc914c1`) |
+| AMD Ryzen 7 7700 (8 cores) | 6 ranks | v14 (build `14-a4867fc914c1`) |
 | MacBook Air M2, Ubuntu in a 6-core Multipass VM | 6 ranks | 13 |
 | Google Cloud c3-standard-8 (4 physical cores) | 4 ranks | v14 (build `14-7b05503f98a8` in its case logs) |
 
 All are Foundation releases. On the plate's 0.25° lift curve, dev, 13 and v14 agree to about 4e-7
-in C_L.
+in C_L. That is too coarse for a5 and a7, so each Re of the re-converged zero-thickness plate stays on
+one build.
 
 ## About this history
 

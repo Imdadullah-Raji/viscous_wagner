@@ -58,12 +58,13 @@ def to_theta_monomial(c, amax, degs=ODD):
     "Collecting" the series: every P_k spills into all lower odd powers
     (P3 = (5x^3 - 3x)/2 feeds theta AND theta^3), so truncating in Legendre
     and truncating in theta are different models."""
-    full = np.zeros(max(ODD) + 1)
+    top = max(max(ODD), max(degs))               # P11 and up for the a5/a7 fits
+    full = np.zeros(top + 1)
     full[list(degs)] = c
     mono = L.leg2poly(full)                      # in x; trims trailing zeros
-    mono = np.pad(mono, (0, max(ODD) + 1 - len(mono)))
+    mono = np.pad(mono, (0, top + 1 - len(mono)))
     tmax = np.deg2rad(amax)
-    return {k: mono[k] / tmax ** k for k in ODD}
+    return {k: mono[k] / tmax ** k for k in range(1, top + 1, 2)}
 
 
 def fig_theta(collected, amax, out):
